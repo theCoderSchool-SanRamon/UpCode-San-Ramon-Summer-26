@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+	<head>
+
+	</head>
+	<body>
+		<div class="master-container">
+			<div class="map-container"></div>
+			<div id="overlay-container"></div>
+		</div>
+		<script>
+			fetch("leafletmap.html")
+				.then(response => response.text())
+				.then(data => {
+					document.getElementById("overlay-container").innerHTML=data;
+				});
+		</script>
+	</body>
+</html>
