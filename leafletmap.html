@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+		<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+		<script src="mappablecounties.js"></script>
+		<script src="states.js"></script>
+		<style>
+			#map {
+				height: 1200px;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="map"></div>
+		<script type="module">
+			await stateData
+			await countyData
+			var map = L.map('map').setView([38, -101.34], 5);
+			//L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>', referrerPolicy: "origin"}).addTo(map);
+			function getColor(d) {return d == null ? '#cfcfcf' : d > 500 ? '#800026' : d > 450 ? '#BD0026' : d > 400 ? '#E31A1C' : d > 350 ? '#FC4E2A' : d > 300 ? '#FD8D3C' : d > 250 ? '#FEB24C' : d > 200 ? '#FED976' : '#FFEDA0';}
+			function style(feature) {return {fillColor: getColor(feature.properties.ratio), weight: 1, opacity: 1, color: 'white', dashArray: '3', fillOpacity: 0.7};}
+			L.geoJson(countyData, {style: style}).addTo(map);
+			L.geoJson(stateData, {style: {fillOpacity: 0, weight: 2}}).addTo(map)
+		</script>
+	</body>
+</html>
