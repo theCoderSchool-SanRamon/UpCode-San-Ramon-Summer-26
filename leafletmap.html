@@ -23,54 +23,88 @@
 				color: #777;
 			}
 			.hover-box {
+				top: 20px;
+				left: 20px;
+				z-index: 5555;
 				pointer-events: none;
 				position: absolute;
 			}
 		</style>
 	</head>
 	<body>
-		<div id="app"></div>
+		<div id="app">
 			<div id="map"></div>
-			<div id="hover" v-show="isHovering"></div>
-		<script type="module">
+			<div id="hover" class="hover-box" v-show="isHovering" :style="{left: mouseX + 'px', top: mouseY + 'px'}">hi</div>
+		</div>
+		<!-- <script type="module">
 			await stateData
 			await countyData
 			var map = L.map('map', {worldCopyJump: true}).setView([38, -101.34], 5);
 			//L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>', referrerPolicy: "origin"}).addTo(map);
 			function getColor(d) {return d == null ? '#cfcfcf' : d > 500 ? '#800026' : d > 450 ? '#BD0026' : d > 400 ? '#E31A1C' : d > 350 ? '#FC4E2A' : d > 300 ? '#FD8D3C' : d > 250 ? '#FEB24C' : d > 200 ? '#FED976' : '#FFEDA0';}
 			function style(feature) {return {fillColor: getColor(feature.properties.ratio), weight: 1, opacity: 1, color: 'white', dashArray: '3', fillOpacity: 0.7};}
-			var info = L.control();
-			info.onAdd = function (map) {
-				this._div = L.DomUtil.create('div', 'info');
-				this.update();
-				return this._div;
-			};
-			info.update = function (props) {
-				this._div.innerHTML = '<h4>Price-to-Rent Ratio</h4>' +  (props ?
-					'<b>' + props.name + ', ' + props.state + '</b><br />' + (props.ratio == null ? "N/A" : props.ratio.toFixed(2))
-					: 'Hover over a county');
-			};
-			info.addTo(map);
+			//var info = L.control();
+			//info.onAdd = function (map) {
+			//	this._div = L.DomUtil.create('div', 'info');
+			///	this.update();
+			//	return this._div;
+			//};
+			//info.update = function (props) {
+			//	this._div.innerHTML = '<h4>Price-to-Rent Ratio</h4>' +  (props ?
+			//		'<b>' + props.name + ', ' + props.state + '</b><br />' + (props.ratio == null ? "N/A" : props.ratio.toFixed(2))
+			//		: 'Hover over a county');
+			//};
+			//info.addTo(map);
 			function onEachFeature(feature, layer) {
 				layer.on({
-					mouseover: () => info.update(layer.feature.properties),
-					mouseout: () => info.update(),
+					mouseover: () => isHovering=true,
+					mouseout: () => isHovering=false,
 					click: e => map.fitBounds(e.target.getBounds())
 				});
 			}
 			L.geoJson(countyData, {style: style, onEachFeature: onEachFeature}).addTo(map);
 			L.geoJson(stateData, {style: {fillOpacity: 0, weight: 2}, interactive: false}).addTo(map)
-		</script>
+		</script>-->
 		<script type="module">
-			import { createApp } from "vue";
+			await stateData;
+			await countyData;
+			const { createApp, ref } = Vue;
 			const app = createApp({
 				data() {
 					return {
-						isHovering: false
+						isHovering: false,
+						map: null,
+						mouseX: 0,
+						mouseY: 0,
+					}
+				},
+				mounted() {
+					this.initMap();
+				},
+				methods: {
+					getColor(d) {
+						return d == null ? '#cfcfcf' : d > 500 ? '#800026' : d > 450 ? '#BD0026' : d > 400 ? '#E31A1C' : d > 350 ? '#FC4E2A' : d > 300 ? '#FD8D3C' : d > 250 ? '#FEB24C' : d > 200 ? '#FED976' : '#FFEDA0';
+					},
+					styleFeature (feature) {
+						return {fillColor: this.getColor(feature.properties.ratio), weight: 1, opacity: 1, color: 'white', dashArray: '3', fillOpacity: 0.7};
+					},
+					initMap() {
+
+						this.map = L.map('map', {worldCopyJump: true}).setView([38, -101.34], 5);
+						//L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>', referrerPolicy: "origin"}).addTo(this.map);
+						const onEachFeature = (feature, layer) => {
+							layer.on({
+								mouseover: (e) => { this.isHovering=true; this.mouseX 
+								mouseout: () => this.isHovering=false,
+								click: e => this.map.fitBounds(e.target.getBounds())
+							});
+						};
+						L.geoJson(countyData, {style: this.styleFeature, onEachFeature: onEachFeature}).addTo(this.map);
+						L.geoJson(stateData, {style: {fillOpacity: 0, weight: 2}, interactive: false}).addTo(this.map)
 					}
 				}
 			})
-			app.mount("#app")
+		app.mount("#app")
 		</script>
 	</body>
 </html>
