@@ -196,6 +196,7 @@
 									this.isHovering = true;
 									this.updateMouse(e);
 									this.updateInfo(feature.properties);
+									if (this.highlightedLayer) {this.highlightedLayer.setStyle(this.styleFeature(this.highlightedLayer.feature));}
 								},
 								mouseout: () => this.isHovering = false,
 								mousemove: (e) => this.updateMouse(e),
