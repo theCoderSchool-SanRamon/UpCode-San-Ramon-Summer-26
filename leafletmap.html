@@ -103,14 +103,14 @@
 						return d == null ? '#cfcfcf' : d > 500 ? '#800026' : d > 450 ? '#BD0026' : d > 400 ? '#E31A1C' : d > 350 ? '#FC4E2A' : d > 300 ? '#FD8D3C' : d > 250 ? '#FEB24C' : d > 200 ? '#FED976' : '#FFEDA0';
 					},
 					styleFeature (feature) {
-						return {fillColor: this.getColor(feature.properties.ratio), weight: 1, opacity: 1, color: 'white', dashArray: '3', fillOpacity: 0.7};
+						return {fillColor: this.getColor(feature.properties.ratio), weight: 0.5, opacity: 1, color: 'white', fillOpacity: 0.7};
 					},
 					updateMouse (e) {
 						this.mouseX = e.originalEvent.clientX; 
 						this.mouseY = e.originalEvent.clientY; 
 					},
 					initMap() {
-						this.map = L.map('map', {worldCopyJump: true}).setView([38, -101.34], 5);
+						this.map = L.map('map', {worldCopyJump: true, preferCanvas: true}).setView([38, -101.34], 5);
 						L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>', referrerPolicy: "origin"}).addTo(this.map);
 						const onEachFeature = (feature, layer) => {
 							layer.on({
