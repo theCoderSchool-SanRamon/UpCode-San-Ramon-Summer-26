@@ -5,6 +5,7 @@
 		<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 		<script src="mappablecounties.js"></script>
 		<script src="states.js"></script>
+		<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 		<style>
 			#map {
 				height: 1200px;
@@ -21,10 +22,16 @@
 				margin: 0 0 5px;
 				color: #777;
 			}
+			.hover-box {
+				pointer-events: none;
+				position: absolute;
+			}
 		</style>
 	</head>
 	<body>
-		<div id="map"></div>
+		<div id="app"></div>
+			<div id="map"></div>
+			<div id="hover" v-show="isHovering"></div>
 		<script type="module">
 			await stateData
 			await countyData
@@ -53,6 +60,17 @@
 			}
 			L.geoJson(countyData, {style: style, onEachFeature: onEachFeature}).addTo(map);
 			L.geoJson(stateData, {style: {fillOpacity: 0, weight: 2}, interactive: false}).addTo(map)
+		</script>
+		<script type="module">
+			import { createApp } from "vue";
+			const app = createApp({
+				data() {
+					return {
+						isHovering: false
+					}
+				}
+			})
+			app.mount("#app")
 		</script>
 	</body>
 </html>
