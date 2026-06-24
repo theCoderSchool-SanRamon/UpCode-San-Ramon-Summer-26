@@ -178,15 +178,15 @@
 						if (this.highlightedLayer) {
 							this.highlightedLayer.setStyle(this.styleFeature(this.highlightedLayer.feature));
 						}
-						layer.setStyle({weight: 3, color: '#FFD700', fillOpacity: 0.9});
+						layer.setStyle({weight: 4, color: '#F0CC00'});
 						layer.bringToFront();
 						this.highlightedLayer = layer;
 						this.map.fitBounds(layer.getBounds());
 						this.searchQuery = "";
 					},
 					initMap() {
-						this.map = L.map('map', {worldCopyJump: true, removeOutsideVisibleBounds: false, preferCanvas: true}).setView([38, -101.34], 5);
-						L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>', referrerPolicy: "origin"}).addTo(this.map);
+						this.map = L.map('map', {worldCopyJump: true, removeOutsideVisibleBounds: false}).setView([38, -101.34], 5);
+						L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 15, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>', referrerPolicy: "origin"}).addTo(this.map);
 
 						const onEachFeature = (feature, layer) => {
 							const key = feature.properties.name + '_' + feature.properties.state;
