@@ -10,6 +10,9 @@
 			#map {
 				height: 1200px;
 			}
+			#app {
+				position: relative;
+			}
 			.info {
 				padding: 6px 8px;
 				font: 14px/16px Arial, Helvetica, sans-serif;
@@ -23,18 +26,26 @@
 				color: #777;
 			}
 			.hover-box {
-				top: 20px;
-				left: 20px;
 				z-index: 5555;
 				pointer-events: none;
 				position: absolute;
+				padding: 6px 8px;
+				font: 14px/16px Arial, Helvetica, sans-serif;
+				background: white;
+				background: rgba(255,255,255,0.8);
+				box-shadow: 0 0 15px rgba(0,0,0,0.2);
+				border-radius: 5px;
+			}
+			.hover-box h4 {
+				margin: 0 0 5px;
+				color: #777;
 			}
 		</style>
 	</head>
 	<body>
 		<div id="app">
 			<div id="map"></div>
-			<div id="hover" class="hover-box" v-show="isHovering" :style="{left: mouseX + 'px', top: mouseY + 'px'}">hi</div>
+			<div id="hover" class="hover-box" v-show="isHovering" :style="{left: mouseX + 'px', top: mouseY + 'px'}" v-html="infoHTML"></div>
 		</div>
 		<!-- <script type="module">
 			await stateData
@@ -74,28 +85,42 @@
 					return {
 						isHovering: false,
 						map: null,
-						mouseX: 0,
-						mouseY: 0,
+						mouseX: 50,
+						mouseY: 50,
+						infoHTML: "",
 					}
 				},
 				mounted() {
 					this.initMap();
 				},
 				methods: {
+					updateInfo (props) {
+						this.infoHTML = '<h4>Price-to-Rent Ratio</h4>' +  (props ?
+							'<b>' + props.name + ', ' + props.state + '</b><br />' + (props.ratio == null ? "N/A" : props.ratio.toFixed(2))
+							: 'Hover over a county');
+					},
 					getColor(d) {
 						return d == null ? '#cfcfcf' : d > 500 ? '#800026' : d > 450 ? '#BD0026' : d > 400 ? '#E31A1C' : d > 350 ? '#FC4E2A' : d > 300 ? '#FD8D3C' : d > 250 ? '#FEB24C' : d > 200 ? '#FED976' : '#FFEDA0';
 					},
 					styleFeature (feature) {
 						return {fillColor: this.getColor(feature.properties.ratio), weight: 1, opacity: 1, color: 'white', dashArray: '3', fillOpacity: 0.7};
 					},
+					updateMouse (e) {
+						this.mouseX = e.originalEvent.clientX; 
+						this.mouseY = e.originalEvent.clientY; 
+					},
 					initMap() {
-
 						this.map = L.map('map', {worldCopyJump: true}).setView([38, -101.34], 5);
-						//L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>', referrerPolicy: "origin"}).addTo(this.map);
+						L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>', referrerPolicy: "origin"}).addTo(this.map);
 						const onEachFeature = (feature, layer) => {
 							layer.on({
-								mouseover: (e) => { this.isHovering=true; this.mouseX 
+								mouseover: (e) => {
+									this.isHovering=true; 
+									this.updateMouse(e);
+									this.updateInfo(feature.properties);
+								},
 								mouseout: () => this.isHovering=false,
+								mousemove: (e) => this.updateMouse(e),
 								click: e => this.map.fitBounds(e.target.getBounds())
 							});
 						};
