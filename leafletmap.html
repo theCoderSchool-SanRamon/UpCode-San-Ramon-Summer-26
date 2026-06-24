@@ -9,6 +9,18 @@
 			#map {
 				height: 1200px;
 			}
+			.info {
+				padding: 6px 8px;
+				font: 14px/16px Arial, Helvetica, sans-serif;
+				background: white;
+				background: rgba(255,255,255,0.8);
+				box-shadow: 0 0 15px rgba(0,0,0,0.2);
+				border-radius: 5px;
+			}
+			.info h4 {
+				margin: 0 0 5px;
+				color: #777;
+			}
 		</style>
 	</head>
 	<body>
@@ -17,11 +29,30 @@
 			await stateData
 			await countyData
 			var map = L.map('map', {worldCopyJump: true}).setView([38, -101.34], 5);
-			L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>', referrerPolicy: "origin"}).addTo(map);
+			//L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>', referrerPolicy: "origin"}).addTo(map);
 			function getColor(d) {return d == null ? '#cfcfcf' : d > 500 ? '#800026' : d > 450 ? '#BD0026' : d > 400 ? '#E31A1C' : d > 350 ? '#FC4E2A' : d > 300 ? '#FD8D3C' : d > 250 ? '#FEB24C' : d > 200 ? '#FED976' : '#FFEDA0';}
 			function style(feature) {return {fillColor: getColor(feature.properties.ratio), weight: 1, opacity: 1, color: 'white', dashArray: '3', fillOpacity: 0.7};}
-			L.geoJson(countyData, {style: style}).addTo(map);
-			L.geoJson(stateData, {style: {fillOpacity: 0, weight: 2}}).addTo(map)
+			var info = L.control();
+			info.onAdd = function (map) {
+				this._div = L.DomUtil.create('div', 'info');
+				this.update();
+				return this._div;
+			};
+			info.update = function (props) {
+				this._div.innerHTML = '<h4>Price-to-Rent Ratio</h4>' +  (props ?
+					'<b>' + props.name + ', ' + props.state + '</b><br />' + (props.ratio == null ? "N/A" : props.ratio.toFixed(2))
+					: 'Hover over a county');
+			};
+			info.addTo(map);
+			function onEachFeature(feature, layer) {
+				layer.on({
+					mouseover: () => info.update(layer.feature.properties),
+					mouseout: () => info.update(),
+					click: e => map.fitBounds(e.target.getBounds())
+				});
+			}
+			L.geoJson(countyData, {style: style, onEachFeature: onEachFeature}).addTo(map);
+			L.geoJson(stateData, {style: {fillOpacity: 0, weight: 2}, interactive: false}).addTo(map)
 		</script>
 	</body>
 </html>
