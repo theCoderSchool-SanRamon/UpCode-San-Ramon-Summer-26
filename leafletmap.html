@@ -7,32 +7,77 @@
 		<script src="states.js"></script>
 		<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 		<style>
-			#map {
-				height: 1000px;
+			* { box-sizing: border-box; margin: 0; padding: 0; }
+			html, body, #app {
+				height: 100%;
+				overflow: hidden;
 			}
 			#app {
+				display: flex;
+				flex-direction: row;
 				position: relative;
 			}
-			.info {
-				padding: 6px 8px;
-				font: 14px/16px Arial, Helvetica, sans-serif;
+			#sidebar {
+				width: 280px;
+				flex-shrink: 0;
 				background: white;
-				background: rgba(255,255,255,0.8);
-				box-shadow: 0 0 15px rgba(0,0,0,0.2);
-				border-radius: 5px;
+				box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+				display: flex;
+				flex-direction: column;
+				z-index: 1000;
+				padding: 16px;
+				gap: 12px;
 			}
-			.info h4 {
-				margin: 0 0 5px;
-				color: #777;
+			#sidebar h3 {
+				font: bold 15px/1.3 Arial, sans-serif;
+				color: #333;
+			}
+			#search-input {
+				width: 100%;
+				padding: 8px 10px;
+				font: 14px Arial, sans-serif;
+				border: 1px solid #ccc;
+				border-radius: 4px;
+				outline: none;
+			}
+			#search-input:focus {
+				border-color: #666;
+			}
+			#suggestions {
+				list-style: none;
+				max-height: calc(100vh - 140px);
+				overflow-y: auto;
+				border: 1px solid #ddd;
+				border-radius: 4px;
+			}
+			#suggestions li {
+				padding: 8px 10px;
+				font: 13px Arial, sans-serif;
+				cursor: pointer;
+				border-bottom: 1px solid #f0f0f0;
+				color: #333;
+			}
+			#suggestions li:last-child {
+				border-bottom: none;
+			}
+			#suggestions li:hover {
+				background: #f5f5f5;
+			}
+			#map-wrapper {
+				flex: 1;
+				position: relative;
+			}
+			#map {
+				height: 100%;
+				width: 100%;
 			}
 			.hover-box {
 				z-index: 5555;
 				pointer-events: none;
-				position: absolute;
+				position: fixed;
 				padding: 6px 8px;
 				font: 14px/16px Arial, Helvetica, sans-serif;
-				background: white;
-				background: rgba(255,255,255,0.8);
+				background: rgba(255,255,255,0.9);
 				box-shadow: 0 0 15px rgba(0,0,0,0.2);
 				border-radius: 5px;
 			}
@@ -44,42 +89,35 @@
 	</head>
 	<body>
 		<div id="app">
-			<div id="map"></div>
-			<div id="hover" class="hover-box" v-show="isHovering" :style="{left: mouseX + 'px', top: mouseY + 'px'}" v-html="infoHTML"></div>
+			<div id="sidebar">
+				<h3>County Search</h3>
+				<input
+					id="search-input"
+					type="text"
+					placeholder="Search county..."
+					v-model="searchQuery"
+					@blur="handleBlur"
+					autocomplete="off"
+				/>
+				<ul id="suggestions" v-if="searchQuery.length > 0 && filteredCounties.length > 0">
+					<li
+						v-for="county in filteredCounties"
+						:key="county.key"
+						@mousedown.prevent="selectCounty(county)"
+					>
+						{{ county.name }}, {{ county.state }}
+					</li>
+				</ul>
+			</div>
+			<div id="map-wrapper">
+				<div id="map"></div>
+				<div class="hover-box" v-show="isHovering" :style="{left: mouseX + 'px', top: mouseY + 'px'}" v-html="infoHTML"></div>
+			</div>
 		</div>
-		<!-- <script type="module">
-			await stateData
-			await countyData
-			var map = L.map('map', {worldCopyJump: true}).setView([38, -101.34], 5);
-			//L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>', referrerPolicy: "origin"}).addTo(map);
-			function getColor(d) {return d == null ? '#cfcfcf' : d > 500 ? '#800026' : d > 450 ? '#BD0026' : d > 400 ? '#E31A1C' : d > 350 ? '#FC4E2A' : d > 300 ? '#FD8D3C' : d > 250 ? '#FEB24C' : d > 200 ? '#FED976' : '#FFEDA0';}
-			function style(feature) {return {fillColor: getColor(feature.properties.ratio), weight: 1, opacity: 1, color: 'white', dashArray: '3', fillOpacity: 0.7};}
-			//var info = L.control();
-			//info.onAdd = function (map) {
-			//	this._div = L.DomUtil.create('div', 'info');
-			///	this.update();
-			//	return this._div;
-			//};
-			//info.update = function (props) {
-			//	this._div.innerHTML = '<h4>Price-to-Rent Ratio</h4>' +  (props ?
-			//		'<b>' + props.name + ', ' + props.state + '</b><br />' + (props.ratio == null ? "N/A" : props.ratio.toFixed(2))
-			//		: 'Hover over a county');
-			//};
-			//info.addTo(map);
-			function onEachFeature(feature, layer) {
-				layer.on({
-					mouseover: () => isHovering=true,
-					mouseout: () => isHovering=false,
-					click: e => map.fitBounds(e.target.getBounds())
-				});
-			}
-			L.geoJson(countyData, {style: style, onEachFeature: onEachFeature}).addTo(map);
-			L.geoJson(stateData, {style: {fillOpacity: 0, weight: 2}, interactive: false}).addTo(map)
-		</script>-->
 		<script type="module">
 			await stateData;
 			await countyData;
-			const { createApp, ref } = Vue;
+			const { createApp } = Vue;
 			const app = createApp({
 				data() {
 					return {
@@ -88,48 +126,97 @@
 						mouseX: 50,
 						mouseY: 50,
 						infoHTML: "",
+						searchQuery: "",
+						allCounties: [],
+						countyLayers: {},
+						highlightedLayer: null,
+					};
+				},
+				computed: {
+					filteredCounties() {
+						const q = this.searchQuery.toLowerCase();
+						if (!q) return [];
+						const startsWith = [];
+						const includes = [];
+						for (const c of this.allCounties) {
+							const nameLower = c.name.toLowerCase();
+							const fullLower = nameLower + ', ' + c.state.toLowerCase();
+							if (nameLower.startsWith(q)) {
+								startsWith.push(c);
+							} else if (fullLower.includes(q)) {
+								includes.push(c);
+							}
+						}
+						return [...startsWith, ...includes].slice(0, 12);
 					}
 				},
 				mounted() {
 					this.initMap();
 				},
 				methods: {
-					updateInfo (props) {
-						this.infoHTML = '<h4>Price-to-Rent Ratio</h4>' +  (props ?
+					handleBlur() {
+						this.searchQuery = "";
+					},
+					updateInfo(props) {
+						this.infoHTML = '<h4>Price-to-Rent Ratio</h4>' + (props ?
 							'<b>' + props.name + ', ' + props.state + '</b><br />' + (props.ratio == null ? "N/A" : props.ratio.toFixed(2))
 							: 'Hover over a county');
 					},
 					getColor(d) {
 						return d == null ? '#cfcfcf' : d > 500 ? '#800026' : d > 450 ? '#BD0026' : d > 400 ? '#E31A1C' : d > 350 ? '#FC4E2A' : d > 300 ? '#FD8D3C' : d > 250 ? '#FEB24C' : d > 200 ? '#FED976' : '#FFEDA0';
 					},
-					styleFeature (feature) {
+					styleFeature(feature) {
 						return {fillColor: this.getColor(feature.properties.ratio), weight: 0.5, opacity: 1, color: 'white', fillOpacity: 0.7};
 					},
-					updateMouse (e) {
-						this.mouseX = e.originalEvent.clientX; 
-						this.mouseY = e.originalEvent.clientY; 
+					updateMouse(e) {
+						this.mouseX = e.originalEvent.clientX;
+						this.mouseY = e.originalEvent.clientY;
+					},
+					selectCounty(county) {
+						const layer = this.countyLayers[county.key];
+						if (!layer) return;
+						if (this.highlightedLayer) {
+							this.highlightedLayer.setStyle(this.styleFeature(this.highlightedLayer.feature));
+						}
+						layer.setStyle({weight: 3, color: '#FFD700', fillOpacity: 0.9});
+						layer.bringToFront();
+						this.highlightedLayer = layer;
+						this.map.fitBounds(layer.getBounds());
+						this.searchQuery = "";
 					},
 					initMap() {
 						this.map = L.map('map', {worldCopyJump: true, removeOutsideVisibleBounds: false}).setView([38, -101.34], 5);
 						L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>', referrerPolicy: "origin"}).addTo(this.map);
+
 						const onEachFeature = (feature, layer) => {
+							const key = feature.properties.name + '_' + feature.properties.state;
+							this.countyLayers[key] = layer;
 							layer.on({
 								mouseover: (e) => {
-									this.isHovering=true; 
+									this.isHovering = true;
 									this.updateMouse(e);
 									this.updateInfo(feature.properties);
 								},
-								mouseout: () => this.isHovering=false,
+								mouseout: () => this.isHovering = false,
 								mousemove: (e) => this.updateMouse(e),
 								click: e => this.map.fitBounds(e.target.getBounds())
 							});
 						};
+
 						L.geoJson(countyData, {style: this.styleFeature, onEachFeature: onEachFeature, renderer: L.canvas({padding: 2.2})}).addTo(this.map);
-						L.geoJson(stateData, {style: {fillOpacity: 0, weight: 1}, interactive: false, renderer: L.svg({padding: 2.2})}).addTo(this.map)
+						L.geoJson(stateData, {style: {fillOpacity: 0, weight: 1}, interactive: false, renderer: L.svg({padding: 2.2})}).addTo(this.map);
+
+						const counties = countyData.features.map(f => ({
+							name: f.properties.name,
+							state: f.properties.state,
+							key: f.properties.name + '_' + f.properties.state,
+						}));
+						counties.sort((a, b) => a.name.localeCompare(b.name) || a.state.localeCompare(b.state));
+						this.allCounties = counties;
 					}
 				}
-			})
-		app.mount("#app")
+			});
+			app.mount("#app");
 		</script>
 	</body>
 </html>
