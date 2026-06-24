@@ -185,7 +185,7 @@
 						this.searchQuery = "";
 					},
 					initMap() {
-						this.map = L.map('map', {worldCopyJump: true, removeOutsideVisibleBounds: false}).setView([38, -101.34], 5);
+						this.map = L.map('map', {worldCopyJump: true, removeOutsideVisibleBounds: false, preferCanvas: true}).setView([38, -101.34], 5);
 						L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>', referrerPolicy: "origin"}).addTo(this.map);
 
 						const onEachFeature = (feature, layer) => {
