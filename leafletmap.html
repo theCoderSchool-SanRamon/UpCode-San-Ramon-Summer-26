@@ -159,12 +159,12 @@
 						this.searchQuery = "";
 					},
 					updateInfo(props) {
-						this.infoHTML = '<h4>Price-to-Rent Ratio</h4>' + (props ?
-							'<b>' + props.name + ', ' + props.state + '</b><br />' + (props.ratio == null ? "N/A" : props.ratio.toFixed(2))
+						this.infoHTML = '<h4>County Price Info</h4>' + (props ?
+							'<b>' + props.name + ', ' + props.state + '</b><br />' + (props.ratio == null ? "N/A" : 'Median House Price: $<b>' + props.houseprice.toString() + '</b><br>Median Contract Rent: $<b>' + props.rent.toString() + '</b>/mo<br>Ratio: <b>' + props.ratio.toFixed(2) + '</b>')
 							: 'Hover over a county');
 					},
 					getColor(d) {
-						return d == null ? '#cfcfcf' : d > 500 ? '#800026' : d > 450 ? '#BD0026' : d > 400 ? '#E31A1C' : d > 350 ? '#FC4E2A' : d > 300 ? '#FD8D3C' : d > 250 ? '#FEB24C' : d > 200 ? '#FED976' : '#FFEDA0';
+						return d == null ? '#CFCFCF' : d > 500 ? '#800026' : d > 450 ? '#BD0026' : d > 400 ? '#E31A1C' : d > 350 ? '#FC4E2A' : d > 300 ? '#FD8D3C' : d > 250 ? '#FEB24C' : d > 200 ? '#FED976' : '#FFEDA0';
 					},
 					styleFeature(feature) {
 						return {fillColor: this.getColor(feature.properties.ratio), weight: 0.5, opacity: 1, color: 'white', fillOpacity: 0.7};
@@ -199,7 +199,6 @@
 									if (this.highlightedLayer) {this.highlightedLayer.setStyle(this.styleFeature(this.highlightedLayer.feature));}
 								},
 								mouseout: () => this.isHovering = false,
-	
 								click: e => this.map.fitBounds(e.target.getBounds()),
 
 							});
