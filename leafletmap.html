@@ -160,7 +160,7 @@
 					},
 					updateInfo(props) {
 						this.infoHTML = '<h4>County Price Info</h4>' + (props ?
-							'<b>' + props.name + ', ' + props.state + '</b><br />' + (props.ratio == null ? "N/A" : 'Median House Price: $<b>' + props.houseprice.toString() + '</b><br>Median Contract Rent: $<b>' + props.rent.toString() + '</b>/mo<br>Ratio: <b>' + props.ratio.toFixed(2) + '</b>')
+							'<b>' + props.name + ', ' + props.state + '</b><br />' + (props.ratio == null ? "N/A" : 'Price/Rent Ratio: <b>' + props.ratio.toFixed(2) + '</b><br>Median Contract Rent: $<b>' + props.rent.toString() + '</b>/mo<br>Median House Price: $<b>' + props.houseprice.toString()  + '</b>')
 							: 'Hover over a county');
 					},
 					getColor(d) {
