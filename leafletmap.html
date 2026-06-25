@@ -111,7 +111,7 @@
 			</div>
 			<div id="map-wrapper">
 				<div id="map"></div>
-				<div class="hover-box" v-show="isHovering && !panning" :style="{left: mouseX + 12 + 'px', top: mouseY + 20 + 'px'}" v-html="infoHTML"></div>
+				<div class="hover-box" v-show="isHovering && panning<=0" :style="{left: mouseX + 12 + 'px', top: mouseY + 20 + 'px'}" v-html="infoHTML"></div>
 			</div>
 		</div>
 		<script type="module">
@@ -122,10 +122,12 @@
 				data() {
 					return {
 						isHovering: false,
-						panning: false,
+						panning: 0,
 						map: null,
 						mouseX: 50,
 						mouseY: 50,
+						mouseX2: 50,
+						mouseY2: 50,
 						infoHTML: "",
 						searchQuery: "",
 						allCounties: [],
@@ -198,21 +200,25 @@
 									this.updateInfo(feature.properties);
 									if (this.highlightedLayer) {this.highlightedLayer.setStyle(this.styleFeature(this.highlightedLayer.feature));}
 								},
-								mouseout: () => this.isHovering = false,
-								click: e => this.map.fitBounds(e.target.getBounds()),
+								mouseout: (e) => {
+									this.isHovering = false;
+								},
+								click: e =>{
+									this.map.fitBounds(e.target.getBounds());
+									this.updateInfo(feature.properties);
+									this.panning = 0;
+								}
 
 							});
 						};
 
 						this.map.on({
-							move: (e) => {
-								this.panning = true; 
-							},
-							moveend: (e) => {
-								this.panning = false;
-								this.isHovering = false; 
-							},
-							mousemove: (e) => this.updateMouse(e), 
+							dragstart: () => this.panning += 1,
+							dragend: () => (this.panning > 0) ? this.panning -=1 : this.panning = 0,
+							mousemove: (e) => this.updateMouse(e),
+							mouseup: (e) => this.updateMouse(e),
+							zoomstart: () => this.panning += 1,
+							zoomend: () => (this.panning > 0) ? this.panning -=1 : this.panning = 0,
 						})
 						L.geoJson(countyData, {style: this.styleFeature, onEachFeature: onEachFeature, renderer: L.canvas({padding: 2.2})}).addTo(this.map);
 						L.geoJson(stateData, {style: {fillOpacity: 0, weight: 1}, interactive: false, renderer: L.svg({padding: 2.2})}).addTo(this.map);
