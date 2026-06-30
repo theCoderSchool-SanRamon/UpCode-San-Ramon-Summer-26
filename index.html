@@ -214,9 +214,13 @@
 							const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=8&countrycodes=us&addressdetails=1`;
 							const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
 							const data = await res.json();
-							const cityTypes = new Set(['city', 'town', 'village', 'borough']);
+							const cityTypes = ['city', 'town', 'village', 'hamlet', 'municipality','borough']
 							this.citySuggestions = data
-								.filter(r => r.lat && r.lon && r.class === 'place' && cityTypes.has(r.type))
+								.filter(r => {
+									const hasCoords = r.lat && r.lon;
+									const isCity = cityTypes.includes(r.addresstype) || cityTypes.includes(r.type);
+									return hasCoords && isCity;
+						})
 								.map(r => {
 									const addr = r.address || {};
 									const city = addr.city || addr.town || addr.village || addr.municipality || r.name;
