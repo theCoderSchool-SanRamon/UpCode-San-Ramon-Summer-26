@@ -214,8 +214,9 @@
 							const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=8&countrycodes=us&addressdetails=1`;
 							const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
 							const data = await res.json();
+							const cityTypes = new Set(['city', 'town', 'village', 'borough']);
 							this.citySuggestions = data
-								.filter(r => r.lat && r.lon)
+								.filter(r => r.lat && r.lon && r.class === 'place' && cityTypes.has(r.type))
 								.map(r => {
 									const addr = r.address || {};
 									const city = addr.city || addr.town || addr.village || addr.municipality || r.name;
