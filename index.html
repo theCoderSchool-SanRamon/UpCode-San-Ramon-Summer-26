@@ -238,7 +238,7 @@
 							: 'Hover over a county');
 					},
 					getColor(d) {
-						return d == null ? '#CFCFCF' : this.getColorMix(
+						return isNaN(d) ? '#CFCFCF' : this.getColorMix(
 							(100*(Math.min(d/12,this.colorMaxVal)/this.colorMaxVal)) < 50 ? `color-mix(
 							in srgb, 
 							green, 
