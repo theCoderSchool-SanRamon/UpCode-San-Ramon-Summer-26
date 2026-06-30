@@ -129,7 +129,7 @@
 						mouseY: 50,
 						mouseX2: 50,
 						mouseY2: 50,
-						colorMaxVal: 600,
+						colorMaxVal: 50,
 						infoHTML: "",
 						searchQuery: "",
 						allCounties: [],
@@ -164,19 +164,19 @@
 					},
 					updateInfo(key) {
 						this.infoHTML = '<h4>County Price Info</h4>' + (countyProperties[key] ?
-							'<b>' + key.replace("_", ", ") + '</b><br />' + (countyProperties[key].ratio == null ? "N/A" : 'Price/Rent Ratio: <b>' + countyProperties[key].ratio.toFixed(2) + '</b><br>Median Contract Rent: $<b>' + countyProperties[key].rent.toString() + '</b>/mo<br>Median House Price: $<b>' + countyProperties[key].houseprice.toString()  + '</b>')
+							'<b>' + key.replace("_", ", ") + '</b><br />' + (countyProperties[key].ratio == null ? "N/A" : 'Price/Rent Ratio: <b>' + (countyProperties[key].ratio/12).toFixed(2) + '</b><br>Median Annual Contract Rent: $<b>' + countyProperties[key].rent.toString() + '</b>/mo<br>Median House Price: $<b>' + countyProperties[key].houseprice.toString()  + '</b>')
 							: 'Hover over a county');
 					},
 					getColor(d) {
 						return d == null ? '#CFCFCF' : this.getColorMix(
-							(100*(Math.min(d,this.colorMaxVal)/this.colorMaxVal)) < 50 ? `color-mix(
-							in display-p3, 
+							(100*(Math.min(d/12,this.colorMaxVal)/this.colorMaxVal)) < 50 ? `color-mix(
+							in srgb, 
 							green, 
-							yellow ${(100*(Math.min(d,this.colorMaxVal)/this.colorMaxVal))*2}%)`
+							yellow ${(100*(Math.min(d/12,this.colorMaxVal)/this.colorMaxVal))*2}%)`
 							: `color-mix(
-							in display-p3, 
+							in srgb, 
 							yellow, 
-							red ${((100*(Math.min(d,this.colorMaxVal)/this.colorMaxVal))-50)*2}%)`
+							red ${((100*(Math.min(d/12,this.colorMaxVal)/this.colorMaxVal))-50)*2}%)`
 
 						);
 					},
