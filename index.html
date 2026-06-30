@@ -234,7 +234,7 @@
 					},
 					updateInfo(key) {
 						this.infoHTML = '<h4>County Price Info</h4>' + (countyProperties[key] ?
-							'<b>' + key.replace("_", ", ") + '</b><br />' + (countyProperties[key].ratio == null ? "N/A" : 'Price/Rent Ratio: <b>' + (countyProperties[key].ratio/12).toFixed(2) + '</b><br>Median Contract Rent: $<b>' + countyProperties[key].rent.toString() + '</b>/mo<br>Median House Price: $<b>' + countyProperties[key].houseprice.toString()  + '</b>')
+							'<b>' + key.replace("_", ", ") + '</b><br />' + (countyProperties[key].houseprice == null ? "N/A" : 'Price/Rent Ratio: <b>' + (countyProperties[key].houseprice / countyProperties[key].rent /12).toFixed(2) + '</b><br>Median Contract Rent: $<b>' + countyProperties[key].rent.toString() + '</b>/mo<br>Median House Price: $<b>' + countyProperties[key].houseprice.toString()  + '</b>')
 							: 'Hover over a county');
 					},
 					getColor(d) {
@@ -255,7 +255,7 @@
 						return cnv.fillStyle;
 					},
 					styleFeature(feature) {
-						return {fillColor: this.getColor(countyProperties[feature.properties.name + '_' + feature.properties.state].ratio), weight: 0.5, opacity: 0.5, color: 'white', fillOpacity: 0.7};
+						return {fillColor: this.getColor(countyProperties[feature.properties.name + '_' + feature.properties.state].houseprice / countyProperties[feature.properties.name + '_' + feature.properties.state].rent), weight: 0.5, opacity: 0.5, color: 'white', fillOpacity: 0.7};
 					},
 					updateMouse(e) {
 						this.mouseX = e.originalEvent.clientX;
