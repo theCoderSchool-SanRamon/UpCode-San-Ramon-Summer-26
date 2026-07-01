@@ -213,20 +213,22 @@
 
 						isHovering: false,
 						panning: 0,
-						//map: null,
 						mouseX: 50,
 						mouseY: 50,
 						colorMaxVal: 50,
 						infoHTML: "",
 						searchQuery: "",
 						allCounties: [],
-						countyLayers: {},
-						highlightedLayer: null,
 						searchMode: 'county',
 						cityQuery: "",
 						citySuggestions: [],
 						cityDebounceTimer: null,
 					};
+				},
+				created() {
+						this.map = null;
+						this.countyLayers = {};
+						this.highlightedLayer = null;
 				},
 				computed: {
 					filteredCounties() {
