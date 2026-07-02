@@ -12,7 +12,7 @@
 			html, body, #app {
 				height: 100%;
 				overflow: hidden;
-				transform: transale3d(0,0,0); 
+				transform: translate3d(0,0,0); 
 			}
 			#app {
 				display: flex;
@@ -190,7 +190,7 @@
 				<div id="map"></div>
 				<div class="hover-box" v-show="isHovering && panning<=0" :style="{left: mouseX + 12 + 'px', top: mouseY + 20 + 'px'}" v-html="infoHTML"></div>
 							<Transition>
-				<div id="infopanel-shade" v-show="showInfoPanel" @click.self="showInfoPanel=false">	
+				<div id="infopanel-shade" v-if="showInfoPanel" @click.self="showInfoPanel=false">	
 					
 					<div id="infopanel" v-html="infoHTML">
 						
@@ -338,7 +338,7 @@
 					},
 					initMap() {
 						this.map = L.map('map', {worldCopyJump: true, removeOutsideVisibleBounds: false, preferCanvas: true, bounceAtZoomLimits: false,}).setView([38, -101.34], 5);
-						L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 18, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>', referrerPolicy: "origin",keepBuffer: 4,updateWhenZooming: true,}).addTo(this.map);
+						L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 18, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>', referrerPolicy: "origin", renderer: L.canvas()}).addTo(this.map);
 
 						const onEachFeature = (feature, layer) => {
 							const key = feature.properties.name + '_' + feature.properties.state;
@@ -367,8 +367,8 @@
 							zoomstart: () => this.panning += 1,
 							zoomend: () => (this.panning > 0) ? this.panning -=1 : this.panning = 0,
 						})
-						L.geoJson(countyGeometry, {style: this.styleFeature, onEachFeature: onEachFeature, renderer: L.canvas({padding: 2.2})}).addTo(this.map);
-						L.geoJson(stateData, {style: {fillOpacity: 0, weight: 1}, interactive: false, renderer: L.svg({padding: 2.2})}).addTo(this.map);
+						L.geoJson(countyGeometry, {style: this.styleFeature, onEachFeature: onEachFeature, smoothFactor: 0.5, renderer: L.canvas({padding: 0.25})}).addTo(this.map);
+						L.geoJson(stateData, {style: {fillOpacity: 0, weight: 1}, interactive: false, renderer: L.svg({padding: 0.25})}).addTo(this.map);
 
 						const counties = countyGeometry.features.map(f => ({
 							name: f.properties.name,
