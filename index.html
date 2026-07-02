@@ -367,8 +367,8 @@
 							zoomstart: () => this.panning += 1,
 							zoomend: () => (this.panning > 0) ? this.panning -=1 : this.panning = 0,
 						})
-						L.geoJson(countyGeometry, {style: this.styleFeature, onEachFeature: onEachFeature, smoothFactor: 0.5, renderer: L.canvas({padding: 0.25})}).addTo(this.map);
-						L.geoJson(stateData, {style: {fillOpacity: 0, weight: 1}, interactive: false, renderer: L.svg({padding: 0.25})}).addTo(this.map);
+						L.geoJson(countyGeometry, {style: this.styleFeature, onEachFeature: onEachFeature, smoothFactor: 0.5, updateWhenIdle: false, renderer: L.canvas({padding: 0.25})}).addTo(this.map);
+						L.geoJson(stateData, {style: {fillOpacity: 0, weight: 1}, interactive: false, updateWhenIdle: false, renderer: L.svg({padding: 0.25})}).addTo(this.map);
 
 						const counties = countyGeometry.features.map(f => ({
 							name: f.properties.name,
