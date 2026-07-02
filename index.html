@@ -5,6 +5,7 @@
 		<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 		<script src="mappablecounties.js"></script>
 		<script src="countydata.js"></script>
+		<script src="places.geojson"></script>
 		<script src="states.js"></script>
 		<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 		<style>
@@ -216,6 +217,7 @@
 						mouseX: 50,
 						mouseY: 50,
 						colorMaxVal: 50,
+						cityZoomThreshold: 8,
 						infoHTML: "",
 						searchQuery: "",
 						allCounties: [],
@@ -227,6 +229,7 @@
 				},
 				created() {
 						this.map = null;
+						this.citylayer = null;
 						this.countyLayers = {};
 						this.highlightedLayer = null;
 				},
@@ -336,6 +339,18 @@
 						this.map.fitBounds(layer.getBounds());
 						this.searchQuery = "";
 					},
+					updateCityVisibility() {
+						const zoom = this.map.getZoom();
+						if (zoom >= this.cityZoomThreshold) {
+							if (!this.map.hasLayer(this.citylayer)) {
+								this.citylayer.addTo(this.map);
+							}
+						} else {
+							if (this.map.hasLayer(this.citylayer)) {
+								this.map.removeLayer(this.citylayer);
+							}
+						}
+					},
 					initMap() {
 						this.map = L.map('map', {worldCopyJump: true, removeOutsideVisibleBounds: false, preferCanvas: true, bounceAtZoomLimits: false,}).setView([38, -101.34], 5);
 						L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 18, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>', referrerPolicy: "origin", renderer: L.canvas()}).addTo(this.map);
@@ -365,10 +380,14 @@
 							mousemove: (e) => this.updateMouse(e),
 							mouseup: (e) => this.updateMouse(e),
 							zoomstart: () => this.panning += 1,
-							zoomend: () => (this.panning > 0) ? this.panning -=1 : this.panning = 0,
+							zoomend: () => {
+								(this.panning > 0) ? this.panning -=1 : this.panning = 0;
+								this.updateCityVisibility();
+							}
 						})
 						L.geoJson(countyGeometry, {style: this.styleFeature, onEachFeature: onEachFeature, smoothFactor: 0.5, updateWhenIdle: false, renderer: L.canvas({padding: 0.25})}).addTo(this.map);
 						L.geoJson(stateData, {style: {fillOpacity: 0, weight: 1}, interactive: false, updateWhenIdle: false, renderer: L.svg({padding: 0.25})}).addTo(this.map);
+						this.citylayer = L.geoJson(placesData, {style: {pointerEvents: 'none'}, smoothFactor: 1, interactive: false, renderer: L.svg({padding: 0})});
 
 						const counties = countyGeometry.features.map(f => ({
 							name: f.properties.name,
