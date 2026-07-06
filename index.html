@@ -32,12 +32,12 @@
 
 			}
 			#infopanel {
-				width: 25%;
-				height: 75%;
+				width: 65%;
+				height: 65%;
 				z-index: 102;
 				padding: 16px;
-				margin-left: 37.5%;
-				margin-top: 6.25%;
+				margin-left: 17.5%;
+				margin-top: 11.6%;
 				background: white;
 				border-radius: 8px;
 			}
@@ -152,6 +152,7 @@
 				<select id="mode-select" v-model="searchMode">
 					<option value="county">Search by County</option>
 					<option value="city">Search by City</option>
+					<option value="zip">Search by ZIP code</option>
 				</select>
 				<input
 					v-if="searchMode === 'county'"
@@ -187,6 +188,23 @@
 						@mousedown.prevent="selectCity(city)"
 					>
 						{{ city.display }}
+					</li>
+				</ul>
+				<input
+					v-if="searchMode === 'zip'"
+					class="search-input"
+					type="text"
+					placeholder="Search ZIP code..."
+					v-model="ZIPQuery"
+					@blur="handleZIPBlur"
+					autocomplete="off"
+				/>
+				<ul class="suggestions" v-if="searchMode === 'zip' && ZIPSuggestions.length > 0">
+					<li
+						v-for="zip in ZIPSuggestions"
+						@mousedown.prevent="selectZIP(zip)"
+					>
+						{{ zip }}
 					</li>
 				</ul>
 			</div>
@@ -229,6 +247,8 @@
 						cityQuery: "",
 						citySuggestions: [],
 						cityDebounceTimer: null,
+						ZIPQuery: "",
+						ZIPSuggestions: [],
 					};
 				},
 				created() {
@@ -302,12 +322,38 @@
 						this.cityQuery = "";
 						this.citySuggestions = [];
 					},
+
+					handleZIPBlur() {
+						this.ZIPQuery = "";
+						this.ZIPSuggestions = [];
+					},
+					async fetchZIP(query) {
+						try {
+							const url = `https://api.zippopotam.us/us/${encodeURIComponent(query)}`;
+							const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+							const data = await res.json();
+
+							this.ZIPSuggestions = data;
+						} 
+						catch (e) {
+							this.ZIPSuggestions = [];
+						}
+					},
+					selectZIP(zip) {
+						this.map.setView([zip.lat, zip.lon], 11);
+						this.ZIPQuery = "";
+						this.ZIPSuggestions = [];
+					},
+
+
+
+
 					updateInfo(key) {
 						this.infoHTML = '<h4>County Price Info</h4>' + (countyProperties[key] ?
 							'<b>' + key.replace("_", ", ") + '</b><br />' + (countyProperties[key].houseprice == null ? "N/A" : 'Price/Rent Ratio: <b>' + (countyProperties[key].houseprice / countyProperties[key].rent /12).toFixed(2) + '</b><br>Median Contract Rent: $<b>' + countyProperties[key].rent.toString() + '</b>/mo<br>Median House Price: $<b>' + countyProperties[key].houseprice.toString()  + '</b>')
 							: 'Hover over a county');
-						this.infoPanelHTML = '<h4>Detailed County Information</h4>' + (countyProperties[key] ?
-							'<b>' + key.replace("_", ", ") + '</b><br />' + (countyProperties[key].houseprice == null ? "N/A" : 'Price/Rent Ratio: <b>' + (countyProperties[key].houseprice / countyProperties[key].rent /12).toFixed(2) + '</b><br>Median Contract Rent: $<b>' + countyProperties[key].rent.toString() + '</b>/mo<br>Median House Price: $<b>' + countyProperties[key].houseprice.toString() + '</b>/mo<br>Population: <b>' + countyProperties[key].population.toString() + '</b><br>Annual Population Change: <b>' + countyProperties[key].populationchange.toString() + '</b><br>Median Income: <b>' + countyProperties[key].income.toString()  + '</b>')
+						this.infoPanelHTML = '<h4>County Price Info</h4>' + (countyProperties[key] ?
+							'<b>' + key.replace("_", ", ") + '</b><br />' + (countyProperties[key].houseprice == null ? "N/A" : 'Price/Rent Ratio: <b>' + (countyProperties[key].houseprice / countyProperties[key].rent /12).toFixed(2) + '</b><br>Median Contract Rent: $<b>' + countyProperties[key].rent.toString() + '</b>/mo<br>Median House Price: $<b>' + countyProperties[key].houseprice.toString() + '</b><br>Population: <b>' + countyProperties[key].population.toString() + '</b><br>Annual Population Change: <b>' + countyProperties[key].populationchange.toString() + '</b>/year<br>Median Income: $<b>' + countyProperties[key].income.toString()  + '/year</b>')
 							: 'Hover over a county');
 					},
 					getColor(d) {
@@ -362,7 +408,7 @@
 						this.map = L.map('map', {worldCopyJump: true, removeOutsideVisibleBounds: false, preferCanvas: true, bounceAtZoomLimits: false,}).setView([38, -101.34], 5);
 						L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 18, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>', referrerPolicy: "origin", renderer: L.canvas()}).addTo(this.map);
 
-						const onEachFeature = (feature, layer) => {
+						const onEachCountyFeature = (feature, layer) => {
 							const key = feature.properties.name + '_' + feature.properties.state;
 							this.countyLayers[key] = layer;
 							layer.on({
@@ -392,7 +438,7 @@
 								this.updateCityVisibility();
 							}
 						})
-						L.geoJson(countyGeometry, {style: this.styleFeature, onEachFeature: onEachFeature, smoothFactor: 0.5, updateWhenIdle: false, renderer: L.canvas({padding: 0.25})}).addTo(this.map);
+						L.geoJson(countyGeometry, {style: this.styleFeature, onEachFeature: onEachCountyFeature, smoothFactor: 0.5, updateWhenIdle: false, renderer: L.canvas({padding: 0.25})}).addTo(this.map);
 						L.geoJson(stateData, {style: {fillOpacity: 0, weight: 1}, interactive: false, updateWhenIdle: false, renderer: L.svg({padding: 0.25})}).addTo(this.map);
 						this.citylayer = L.geoJson(placesData, {smoothFactor: 1, interactive: false, renderer: L.svg({padding: 0})});
 
