@@ -32,11 +32,11 @@
 
 			}
 			#infopanel {
-				width: 75%;
+				width: 25%;
 				height: 75%;
 				z-index: 102;
 				padding: 16px;
-				margin-left: 12.5%;
+				margin-left: 37.5%;
 				margin-top: 6.25%;
 				background: white;
 				border-radius: 8px;
@@ -221,7 +221,7 @@
 						mouseX: 50,
 						mouseY: 50,
 						colorMaxVal: 50,
-						cityZoomThreshold: 8,
+						cityZoomThreshold: 9,
 						infoHTML: "",
 						searchQuery: "",
 						allCounties: [],
@@ -306,8 +306,8 @@
 						this.infoHTML = '<h4>County Price Info</h4>' + (countyProperties[key] ?
 							'<b>' + key.replace("_", ", ") + '</b><br />' + (countyProperties[key].houseprice == null ? "N/A" : 'Price/Rent Ratio: <b>' + (countyProperties[key].houseprice / countyProperties[key].rent /12).toFixed(2) + '</b><br>Median Contract Rent: $<b>' + countyProperties[key].rent.toString() + '</b>/mo<br>Median House Price: $<b>' + countyProperties[key].houseprice.toString()  + '</b>')
 							: 'Hover over a county');
-						this.infoPanelHTML = '<h4>County Price Info</h4>' + (countyProperties[key] ?
-							'<b>' + key.replace("_", ", ") + '</b><br />' + (countyProperties[key].houseprice == null ? "N/A" : 'Price/Rent Ratio: <b>' + (countyProperties[key].houseprice / countyProperties[key].rent /12).toFixed(2) + '</b><br>Median Contract Rent: $<b>' + countyProperties[key].rent.toString() + '</b>/mo<br>Median House Price: $<b>' + countyProperties[key].houseprice.toString() + '</b>/mo<br>Population: <b>' + countyProperties[key].population.toString() + '</b>/mo<br>Annual Population Change: <b>' + countyProperties[key].populationchange.toString() + '</b>/mo<br>Median Income: <b>' + countyProperties[key].income.toString()  + '</b>')
+						this.infoPanelHTML = '<h4>Detailed County Information</h4>' + (countyProperties[key] ?
+							'<b>' + key.replace("_", ", ") + '</b><br />' + (countyProperties[key].houseprice == null ? "N/A" : 'Price/Rent Ratio: <b>' + (countyProperties[key].houseprice / countyProperties[key].rent /12).toFixed(2) + '</b><br>Median Contract Rent: $<b>' + countyProperties[key].rent.toString() + '</b>/mo<br>Median House Price: $<b>' + countyProperties[key].houseprice.toString() + '</b>/mo<br>Population: <b>' + countyProperties[key].population.toString() + '</b><br>Annual Population Change: <b>' + countyProperties[key].populationchange.toString() + '</b><br>Median Income: <b>' + countyProperties[key].income.toString()  + '</b>')
 							: 'Hover over a county');
 					},
 					getColor(d) {
@@ -394,7 +394,7 @@
 						})
 						L.geoJson(countyGeometry, {style: this.styleFeature, onEachFeature: onEachFeature, smoothFactor: 0.5, updateWhenIdle: false, renderer: L.canvas({padding: 0.25})}).addTo(this.map);
 						L.geoJson(stateData, {style: {fillOpacity: 0, weight: 1}, interactive: false, updateWhenIdle: false, renderer: L.svg({padding: 0.25})}).addTo(this.map);
-						this.citylayer = L.geoJson(placesData, {style: {pointerEvents: 'none'}, smoothFactor: 1, interactive: false, renderer: L.svg({padding: 0})});
+						this.citylayer = L.geoJson(placesData, {smoothFactor: 1, interactive: false, renderer: L.svg({padding: 0})});
 
 						const counties = countyGeometry.features.map(f => ({
 							name: f.properties.name,
