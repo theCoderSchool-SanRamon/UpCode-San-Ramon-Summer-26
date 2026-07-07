@@ -61,13 +61,17 @@
 			#sidebar {
 				width: 280px;
 				flex-shrink: 0;
-				background: white;
-				
+				position: fixed;
+				/*height: calc(100% - 16px);*/
+				border-radius: 8px;
+				background: rgba(255,255,255,0.5);
+				backdrop-filter: blur(5px);
 				box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
 				display: flex;
 				flex-direction: column;
 				z-index: 100;
 				padding: 16px;
+				margin: 8px;
 				gap: 12px;
 			}
 			#mode-select {
@@ -101,11 +105,13 @@
 				overflow-y: auto;
 				border: 1px solid #ddd;
 				border-radius: 4px;
+				background: rgba(255,255,255,0.5);
 			}
 			.suggestions li {
 				padding: 8px 10px;
 				font: 13px Arial, sans-serif;
 				cursor: pointer;
+
 				border-bottom: 1px solid #f0f0f0;
 				color: #333;
 			}
@@ -202,9 +208,10 @@
 				<ul class="suggestions" v-if="searchMode === 'zip' && ZIPSuggestions.length > 0">
 					<li
 						v-for="zip in ZIPSuggestions"
+						:key="zip.display"
 						@mousedown.prevent="selectZIP(zip)"
 					>
-						{{ zip }}
+						{{ zip.display }}
 					</li>
 				</ul>
 			</div>
@@ -247,6 +254,7 @@
 						cityQuery: "",
 						citySuggestions: [],
 						cityDebounceTimer: null,
+						ZIPDebounceTimer: null,
 						ZIPQuery: "",
 						ZIPSuggestions: [],
 					};
@@ -281,6 +289,11 @@
 						clearTimeout(this.cityDebounceTimer);
 						if (!val.trim()) { this.citySuggestions = []; return; }
 						this.cityDebounceTimer = setTimeout(() => this.fetchCities(val), 350);
+					},
+					ZIPQuery(val) {
+						clearTimeout(this.ZIPDebounceTimer);
+						if (!val.trim()) { this.ZIPSuggestions = []; return; }
+						this.ZIPDebounceTimer = setTimeout(() => this.fetchZIP(val), 350);
 					},
 				},
 				mounted() {
@@ -332,8 +345,8 @@
 							const url = `https://api.zippopotam.us/us/${encodeURIComponent(query)}`;
 							const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
 							const data = await res.json();
-
-							this.ZIPSuggestions = data;
+							const place = data['places'][0];
+							this.ZIPSuggestions = [{display: `${place['place name']}, ${place['state']}`,lat: parseFloat(place.latitude), lon: parseFloat(place.longitude)}]
 						} 
 						catch (e) {
 							this.ZIPSuggestions = [];
@@ -405,7 +418,7 @@
 						}
 					},
 					initMap() {
-						this.map = L.map('map', {worldCopyJump: true, removeOutsideVisibleBounds: false, preferCanvas: true, bounceAtZoomLimits: false,}).setView([38, -101.34], 5);
+						this.map = L.map('map', {worldCopyJump: true, zoomControl: false, removeOutsideVisibleBounds: false, preferCanvas: true, bounceAtZoomLimits: false,}).setView([38, -101.34], 5);
 						L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 18, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>', referrerPolicy: "origin", renderer: L.canvas()}).addTo(this.map);
 
 						const onEachCountyFeature = (feature, layer) => {
@@ -439,7 +452,7 @@
 							}
 						})
 						L.geoJson(countyGeometry, {style: this.styleFeature, onEachFeature: onEachCountyFeature, smoothFactor: 0.5, updateWhenIdle: false, renderer: L.canvas({padding: 0.25})}).addTo(this.map);
-						L.geoJson(stateData, {style: {fillOpacity: 0, weight: 1}, interactive: false, updateWhenIdle: false, renderer: L.svg({padding: 0.25})}).addTo(this.map);
+						L.geoJson(stateData, {style: {fillOpacity: 0, weight: 1, color: 'gray'}, smoothFactor: 0, interactive: false, updateWhenIdle: false, renderer: L.svg({padding: 0.25})}).addTo(this.map);
 						this.citylayer = L.geoJson(placesData, {smoothFactor: 1, interactive: false, renderer: L.svg({padding: 0})});
 
 						const counties = countyGeometry.features.map(f => ({
