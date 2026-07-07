@@ -3,10 +3,6 @@
 	<head>
 		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 		<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-		<script src="mappablecounties.js"></script>
-		<script src="countydata.js"></script>
-		<script src="places.geojson"></script>
-		<script src="states.js"></script>
 		<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 		<style>
 			* { box-sizing: border-box; margin: 0; padding: 0; }
@@ -255,13 +251,20 @@
 				</div>
 			</Transition>
 			</div>
-
-			
-			
 		</div>
 		<script type="module">
-			await stateData;
-			await countyGeometry;
+			var stateData = fetch("states.geojson", {headers: {'Content-Type': 'application/json'}});
+			var countyGeometry = fetch("counties.geojson", {headers: {'Content-Type': 'application/json'}});
+			var countyProperties = fetch("countydata.json", {headers: {'Content-Type': 'application/json'}});
+			var placesGeometry = fetch("places.geojson", {headers: {'Content-Type': 'application/json'}});
+			stateData = await stateData;
+			countyGeometry = await countyGeometry;
+			countyProperties = await countyProperties;
+			placesGeometry = await placesGeometry;
+			stateData = await stateData.json();
+			countyGeometry = await countyGeometry.json();
+			countyProperties = await countyProperties.json();
+			placesGeometry = await placesGeometry.json();
 			const { createApp } = Vue;
 			const app = createApp({
 				data() {
@@ -384,16 +387,12 @@
 						this.ZIPQuery = "";
 						this.ZIPSuggestions = [];
 					},
-
-
-
-
 					updateInfo(key) {
 						this.infoHTML = '<h4>County Price Info</h4>' + (countyProperties[key] ?
 							'<b>' + key.replace("_", ", ") + '</b><br />' + (countyProperties[key].houseprice == null ? "N/A" : 'Price/Rent Ratio: <b>' + (countyProperties[key].houseprice / countyProperties[key].rent /12).toFixed(2) + '</b><br>Median Contract Rent: $<b>' + countyProperties[key].rent.toString() + '</b>/mo<br>Median House Price: $<b>' + countyProperties[key].houseprice.toString()  + '</b>')
 							: 'Hover over a county');
 						this.infoPanelHTML = '<h4>Detailed County Information</h4>' + (countyProperties[key] ?
-							'<b>' + key.replace("_", ", ") + '</b><br />' + (countyProperties[key].houseprice == null ? "N/A" : 'Price/Rent Ratio: <b>' + (countyProperties[key].houseprice / countyProperties[key].rent /12).toFixed(2) + '</b><br>Median Contract Rent: $<b>' + countyProperties[key].rent.toString() + '</b>/mo<br>Median House Price: $<b>' + countyProperties[key].houseprice.toString() + '</b><br>Population: <b>' + countyProperties[key].population.toString() + '</b><br>Annual Population Change: <b>' + countyProperties[key].populationchange.toString() + '</b>/year<br>Median Income: $<b>' + countyProperties[key].income.toString()  + '/year</b>')
+							'<b>' + key.replace("_", ", ") + '</b><br />' + (countyProperties[key].houseprice == null ? "N/A" : 'Price/Rent Ratio: <b>' + (countyProperties[key].houseprice / countyProperties[key].rent /12).toFixed(2) + '</b><br>Median Contract Rent: $<b>' + countyProperties[key].rent.toString() + '</b>/mo<br>Median House Price: $<b>' + countyProperties[key].houseprice.toString() + '</b><br>Population: <b>' + countyProperties[key].population.toString() + '</b><br>Annual Population Change: <b>' + countyProperties[key].populationchange.toString() + '</b>/year<br>Median Income: $<b>' + (countyProperties[key].income != null ? countyProperties[key].income.toString() : 'N/A')  + '/year</b>')
 							: 'Hover over a county');
 					},
 					getColor(d) {
@@ -480,7 +479,7 @@
 						})
 						L.geoJson(countyGeometry, {style: this.styleFeature, onEachFeature: onEachCountyFeature, smoothFactor: 0.5, updateWhenIdle: false, renderer: L.canvas({padding: 0.25})}).addTo(this.map);
 						L.geoJson(stateData, {style: {fillOpacity: 0, weight: 1, color: 'gray'}, smoothFactor: 0, interactive: false, updateWhenIdle: false, renderer: L.svg({padding: 0.25})}).addTo(this.map);
-						this.citylayer = L.geoJson(placesData, {smoothFactor: 1, interactive: false, renderer: L.svg({padding: 0})});
+						this.citylayer = L.geoJson(placesGeometry, {smoothFactor: 1, interactive: false, renderer: L.svg({padding: 0})});
 
 						const counties = countyGeometry.features.map(f => ({
 							name: f.properties.name,
