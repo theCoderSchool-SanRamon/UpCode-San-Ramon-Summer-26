@@ -163,6 +163,21 @@
 			.leaflet-control-container {
 				user-select: none;
 			}
+			#load-splash {
+				background-color: #aad3df;
+				bottom: 0;
+				color: white;
+				display: block;
+				font-size: 64px;
+				left: 0;
+				overflow: hidden;
+				padding-top: 20%;
+				position: fixed;
+				right: 0;
+				text-align: center;
+				top: 0;
+				z-index: 103;
+			}
 		</style>
 	</head>
 	<body>
@@ -251,6 +266,11 @@
 				</div>
 			</Transition>
 			</div>
+			<Transition>
+				<div id="load-splash" v-show="appLoaded">
+					&lt; LOADING &gt;
+				</div>
+			</Transition>
 		</div>
 		<script type="module">
 			var stateData = fetch("states.geojson", {headers: {'Content-Type': 'application/json'}});
@@ -265,6 +285,7 @@
 			countyGeometry = await countyGeometry.json();
 			countyProperties = await countyProperties.json();
 			placesGeometry = await placesGeometry.json();
+			const appLoaded = true
 			const { createApp } = Vue;
 			const app = createApp({
 				data() {
