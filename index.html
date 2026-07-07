@@ -352,7 +352,7 @@
 						this.infoHTML = '<h4>County Price Info</h4>' + (countyProperties[key] ?
 							'<b>' + key.replace("_", ", ") + '</b><br />' + (countyProperties[key].houseprice == null ? "N/A" : 'Price/Rent Ratio: <b>' + (countyProperties[key].houseprice / countyProperties[key].rent /12).toFixed(2) + '</b><br>Median Contract Rent: $<b>' + countyProperties[key].rent.toString() + '</b>/mo<br>Median House Price: $<b>' + countyProperties[key].houseprice.toString()  + '</b>')
 							: 'Hover over a county');
-						this.infoPanelHTML = '<h4>County Price Info</h4>' + (countyProperties[key] ?
+						this.infoPanelHTML = '<h4>Detailed County Information</h4>' + (countyProperties[key] ?
 							'<b>' + key.replace("_", ", ") + '</b><br />' + (countyProperties[key].houseprice == null ? "N/A" : 'Price/Rent Ratio: <b>' + (countyProperties[key].houseprice / countyProperties[key].rent /12).toFixed(2) + '</b><br>Median Contract Rent: $<b>' + countyProperties[key].rent.toString() + '</b>/mo<br>Median House Price: $<b>' + countyProperties[key].houseprice.toString() + '</b><br>Population: <b>' + countyProperties[key].population.toString() + '</b><br>Annual Population Change: <b>' + countyProperties[key].populationchange.toString() + '</b>/year<br>Median Income: $<b>' + countyProperties[key].income.toString()  + '/year</b>')
 							: 'Hover over a county');
 					},
