@@ -6,10 +6,20 @@ cursor = conn.cursor()
 
 if len(argv) <= 1: targetFile = input("Enter file to load: ").replace('\\', '/')
 else: targetFile = argv[1].replace('\\', '/')
-with open(targetFile) as file: dataframe = pandas.read_json(file, orient="records")
-columnname = dataframe.iloc[0][0]
-dataframe.columns = dataframe.iloc[0]
-dataframe = dataframe.drop(0).dropna().astype(int)
+if targetFile.endswith("json"):
+	print("Attempting to open Census-formatted JSON.")
+	with open(targetFile) as file: dataframe = pandas.read_json(file, orient="records")
+	columnname = dataframe.iloc[0][0]
+	dataframe.columns = dataframe.iloc[0]
+	dataframe = dataframe.drop(0).dropna().astype(int)
+elif targetFile.endswith("csv"):
+	print("Attempting to open formatted CSV.")
+	with open(targetFile) as file: dataframe = pandas.read_csv(file)
+	columnname = input("Target column name: ")
+	if not columnname in dataframe.columns:
+		print("Incorrect column name.")
+else:
+	print("File type not recognized.")
 dataframe.to_sql("Loading", conn, index=False, dtype="INTEGER")
 
 preferred = input("Preferred column name: ").lower()
