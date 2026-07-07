@@ -47,42 +47,51 @@
 			.v-enter-from, .v-leave-to {
 				opacity: 0;
 			}
+
 			.v-enter-active #infopanel,
 			.v-leave-active #infopanel {
 				transition: transform 0.4s cubic-bezier(0.16, 1, 0.5, 1);
 			}
-
 			.v-enter-from #infopanel {
 				transform: scale(0.9) translateY(130%);
 			}
 			.v-leave-to #infopanel {
 				transform: scale(0.9);
 			}
+
 			#sidebar {
 				width: 280px;
+
 				flex-shrink: 0;
 				position: fixed;
 				/*height: calc(100% - 16px);*/
 				border-radius: 8px;
-				background: rgba(255,255,255,0.5);
-				backdrop-filter: blur(5px);
-				box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+				/*background: rgba(255,255,255,0.5);
+				backdrop-filter: blur(5px)
+				box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);*/
 				display: flex;
-				flex-direction: column;
 				z-index: 100;
 				padding: 16px;
 				margin: 8px;
 				gap: 12px;
 			}
+			#search-wrapper {
+				flex-direction: column;
+				width: 85%;
+				scrollbar-color: rgba(255,255,255,0.75) transparent;
+				
+			}
 			#mode-select {
-				width: 100%;
-				padding: 8px 10px;
-				font: 14px Arial, sans-serif;
+				font: 0px Arial, sans-serif;
 				border: 1px solid #ccc;
-				border-radius: 4px;
+				border-radius: 8px;
 				outline: none;
+				flex: none;
+				
+				width: 15%;
 				background: white;
 				cursor: pointer;
+ 				max-height: 32px; 
 				user-select: none;
 			}
 			#mode-select:focus {
@@ -90,10 +99,12 @@
 			}
 			.search-input {
 				width: 100%;
+				background: rgba(255,255,255,0.5);
+				backdrop-filter: blur(5px);
 				padding: 8px 10px;
 				font: 14px Arial, sans-serif;
 				border: 1px solid #ccc;
-				border-radius: 4px;
+				border-radius: 14px;
 				outline: none;
 			}
 			.search-input:focus {
@@ -103,23 +114,30 @@
 				list-style: none;
 				max-height: calc(100vh - 140px);
 				overflow-y: auto;
-				border: 1px solid #ddd;
+				border: 0px solid #ddd;
 				border-radius: 4px;
-				background: rgba(255,255,255,0.5);
+				background: transparent;
 			}
 			.suggestions li {
 				padding: 8px 10px;
 				font: 13px Arial, sans-serif;
 				cursor: pointer;
-
-				border-bottom: 1px solid #f0f0f0;
+				border-radius: 4px;
+				margin: 2px;
+				
+				background: rgba(255, 255, 255, 0.666);
+				backdrop-filter: blur(3px);
+				border: 0.5px solid #f0f0f0;
 				color: #333;
+				transition: 
+					margin 0.2s ease-in-out;
 			}
 			.suggestions li:last-child {
 				border-bottom: none;
 			}
 			.suggestions li:hover {
-				background: #f5f5f5;
+				background-color: #f5f5f5;
+				margin-left: 4px;
 			}
 			#map-wrapper {
 				flex: 1;
@@ -155,11 +173,7 @@
 		<div id="app">
 
 			<div id="sidebar">
-				<select id="mode-select" v-model="searchMode">
-					<option value="county">Search by County</option>
-					<option value="city">Search by City</option>
-					<option value="zip">Search by ZIP code</option>
-				</select>
+				<div id="search-wrapper">
 				<input
 					v-if="searchMode === 'county'"
 					class="search-input"
@@ -169,6 +183,7 @@
 					@blur="handleBlur"
 					autocomplete="off"
 				/>
+				<Transition>
 				<ul class="suggestions" v-if="searchMode === 'county' && searchQuery.length > 0 && filteredCounties.length > 0">
 					<li
 						v-for="county in filteredCounties"
@@ -178,6 +193,7 @@
 						{{ county.name }}, {{ county.state }}
 					</li>
 				</ul>
+				</Transition>
 				<input
 					v-if="searchMode === 'city'"
 					class="search-input"
@@ -187,6 +203,7 @@
 					@blur="handleCityBlur"
 					autocomplete="off"
 				/>
+				<Transition>
 				<ul class="suggestions" v-if="searchMode === 'city' && citySuggestions.length > 0">
 					<li
 						v-for="city in citySuggestions"
@@ -196,6 +213,7 @@
 						{{ city.display }}
 					</li>
 				</ul>
+				</Transition>
 				<input
 					v-if="searchMode === 'zip'"
 					class="search-input"
@@ -205,6 +223,7 @@
 					@blur="handleZIPBlur"
 					autocomplete="off"
 				/>
+				<Transition>
 				<ul class="suggestions" v-if="searchMode === 'zip' && ZIPSuggestions.length > 0">
 					<li
 						v-for="zip in ZIPSuggestions"
@@ -214,6 +233,14 @@
 						{{ zip.display }}
 					</li>
 				</ul>
+				</Transition>
+				</div>
+				<select id="mode-select" v-model="searchMode">
+					<option value="county">Search by County</option>
+					<option value="city">Search by City</option>
+					<option value="zip">Search by ZIP code</option>
+				</select>
+
 			</div>
 			
 			<div id="map-wrapper">
