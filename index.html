@@ -213,14 +213,14 @@
 					class="search-input"
 					type="text"
 					placeholder="Search city..."
-					v-model="cityQuery"
+					v-model="searchQuery"
 					@blur="handleCityBlur"
 					autocomplete="off"
 				/>
 				<Transition>
-				<ul class="suggestions" v-if="searchMode === 'city' && citySuggestions.length > 0">
+				<ul class="suggestions" v-if="searchMode === 'city' && searchSuggestions.length > 0">
 					<li
-						v-for="city in citySuggestions"
+						v-for="city in searchSuggestions"
 						:key="city.place_id"
 						@mousedown.prevent="selectCity(city)"
 					>
@@ -233,14 +233,14 @@
 					class="search-input"
 					type="text"
 					placeholder="Search ZIP code..."
-					v-model="ZIPQuery"
+					v-model="searchQuery"
 					@blur="handleZIPBlur"
 					autocomplete="off"
 				/>
 				<Transition>
-				<ul class="suggestions" v-if="searchMode === 'zip' && ZIPSuggestions.length > 0">
+				<ul class="suggestions" v-if="searchMode === 'zip' && searchSuggestions.length > 0">
 					<li
-						v-for="zip in ZIPSuggestions"
+						v-for="zip in searchSuggestions"
 						:key="zip.display"
 						@mousedown.prevent="selectZIP(zip)"
 					>
@@ -305,17 +305,16 @@
 						searchQuery: "",
 						allCounties: [],
 						searchMode: 'county',
-						cityQuery: "",
+						searchSuggestions: [],
 						citySuggestions: [],
-						cityDebounceTimer: null,
-						ZIPDebounceTimer: null,
-						ZIPQuery: "",
+						suggestionDebounceTimer: null,
 						ZIPSuggestions: [],
 					};
 				},
 				created() {
 						this.map = null;
 						this.citylayer = null;
+						this.countyLayer = null;
 						this.countyLayers = {};
 						this.highlightedLayer = null;
 				},
@@ -339,15 +338,17 @@
 					}
 				},
 				watch: {
-					cityQuery(val) {
-						clearTimeout(this.cityDebounceTimer);
-						if (!val.trim()) { this.citySuggestions = []; return; }
-						this.cityDebounceTimer = setTimeout(() => this.fetchCities(val), 350);
-					},
-					ZIPQuery(val) {
-						clearTimeout(this.ZIPDebounceTimer);
-						if (!val.trim()) { this.ZIPSuggestions = []; return; }
-						this.ZIPDebounceTimer = setTimeout(() => this.fetchZIP(val), 350);
+					searchQuery(val) {
+						if (this.searchMode=='city') {
+							clearTimeout(this.suggestionDebounceTimer);
+							if (!val.trim()) { this.searchSuggestions = []; return; }
+							this.suggestionDebounceTimer = setTimeout(() => this.fetchCities(val), 350);
+						} else if (this.searchMode=='zip') {
+							clearTimeout(this.suggestionDebounceTimer);
+							if (!val.trim()) { this.searchSuggestions = []; return; }
+							this.suggestionDebounceTimer = setTimeout(() => this.fetchZIP(val), 350);
+						}
+
 					},
 				},
 				mounted() {
@@ -358,8 +359,8 @@
 						this.searchQuery = "";
 					},
 					handleCityBlur() {
-						this.cityQuery = "";
-						this.citySuggestions = [];
+						this.searchQuery = "";
+						this.searchSuggestions = [];
 					},
 					async fetchCities(query) {
 						try {
@@ -367,7 +368,7 @@
 							const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
 							const data = await res.json();
 							const cityTypes = ['city', 'town', 'village', 'hamlet', 'municipality','borough']
-							this.citySuggestions = data
+							this.searchSuggestions = data
 								.filter(r => {
 									const hasCoords = r.lat && r.lon;
 									const isCity = cityTypes.includes(r.addresstype) || cityTypes.includes(r.type);
@@ -381,18 +382,18 @@
 								});
 						} 
 						catch (e) {
-							this.citySuggestions = [];
+							this.searchSuggestions = [];
 						}
 					},
 					selectCity(city) {
 						this.map.setView([city.lat, city.lon], 11);
-						this.cityQuery = "";
-						this.citySuggestions = [];
+						this.searchQuery = "";
+						this.searchSuggestions = [];
 					},
 
 					handleZIPBlur() {
-						this.ZIPQuery = "";
-						this.ZIPSuggestions = [];
+						this.searchQuery = "";
+						this.searchSuggestions = [];
 					},
 					async fetchZIP(query) {
 						try {
@@ -400,16 +401,16 @@
 							const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
 							const data = await res.json();
 							const place = data['places'][0];
-							this.ZIPSuggestions = [{display: `${place['place name']}, ${place['state']}`,lat: parseFloat(place.latitude), lon: parseFloat(place.longitude)}]
+							this.searchSuggestions = [{display: `${place['place name']}, ${place['state']}`,lat: parseFloat(place.latitude), lon: parseFloat(place.longitude)}]
 						} 
 						catch (e) {
-							this.ZIPSuggestions = [];
+							this.searchSuggestions = [];
 						}
 					},
 					selectZIP(zip) {
 						this.map.setView([zip.lat, zip.lon], 11);
-						this.ZIPQuery = "";
-						this.ZIPSuggestions = [];
+						this.searchQuery = "";
+						this.searchSuggestions = [];
 					},
 					updateInfo(key) {
 						this.infoHTML = '<h4>County Price Info</h4>' + (countyProperties[key] ?
@@ -419,16 +420,16 @@
 							'<b>' + key.replace("_", ", ") + '</b><br />' + (countyProperties[key].houseprice == null ? "N/A" : 'Price/Rent Ratio: <b>' + (countyProperties[key].houseprice / countyProperties[key].rent /12).toFixed(2) + '</b><br>Median Contract Rent: $<b>' + countyProperties[key].rent.toString() + '</b>/mo<br>Median House Price: $<b>' + countyProperties[key].houseprice.toString() + '</b><br>Population: <b>' + countyProperties[key].population.toString() + '</b><br>Annual Population Change: <b>' + countyProperties[key].populationchange.toString() + '</b>/year<br>Median Income: $<b>' + (countyProperties[key].income != null ? countyProperties[key].income.toString() : 'N/A')  + '/year</b>')
 							: 'Hover over a county');
 					},
-					getColor(d) {
+					getColor(d,m,i) {
 						return isNaN(d) ? '#CFCFCF' : this.getColorMix(
-							(100*(Math.min(d/12,this.colorMaxVal)/this.colorMaxVal)) < 50 ? `color-mix(
+							(100*(Math.min(d,m)/m)) < 50 ? `color-mix(
 							in srgb, 
-							green, 
-							yellow ${(100*(Math.min(d/12,this.colorMaxVal)/this.colorMaxVal))*2}%)`
+							${i ? 'red' : 'green'}, 
+							yellow ${(100*(Math.min(d,m)/m))*2}%)`
 							: `color-mix(
 							in srgb, 
 							yellow, 
-							red ${((100*(Math.min(d/12,this.colorMaxVal)/this.colorMaxVal))-50)*2}%)`
+							${i ? 'green' : 'red'} ${((100*(Math.min(d,m)/m))-50)*2}%)`
 						);
 					},
 					getColorMix(s) {
@@ -437,7 +438,10 @@
 						return cnv.fillStyle;
 					},
 					styleFeature(feature) {
-						const col = this.getColor(countyProperties[feature.properties.name + '_' + feature.properties.state].houseprice / countyProperties[feature.properties.name + '_' + feature.properties.state].rent)
+						const county = countyProperties[feature.properties.name + '_' + feature.properties.state];
+						const pricetorent = (county.houseprice/county.rent)/12;
+						/*const col = this.getColor(this.searchMode=='county' ? pricetorent : county.population,this.searchMode=='county' ? this.colorMaxVal : 70000, this.searchMode!='county');*/app
+						const col = this.getColor(pricetorent,this.colorMaxVal,false);
 						return {fillColor: col, color: col, weight: 12, opacity: 0.05, fillOpacity: 0.7};
 					},
 					updateMouse(e) {
@@ -468,6 +472,9 @@
 							}
 						}
 					},
+					refreshCountyColoring() {
+						this.countyLayer.setStyle(this.styleFeature);
+					},
 					initMap() {
 						this.map = L.map('map', {worldCopyJump: true, zoomControl: false, removeOutsideVisibleBounds: false, preferCanvas: true, bounceAtZoomLimits: false,}).setView([38, -101.34], 5);
 						L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 18, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>', referrerPolicy: "origin", renderer: L.canvas()}).addTo(this.map);
@@ -488,6 +495,7 @@
 									this.updateInfo(key);
 									this.panning = 0;
 									this.showInfoPanel = true;
+									this.refreshCountyColoring();
 								}
 							});
 						};
@@ -502,10 +510,11 @@
 								this.updateCityVisibility();
 							}
 						})
-						L.geoJson(countyGeometry, {style: this.styleFeature, onEachFeature: onEachCountyFeature, smoothFactor: 0.5, updateWhenIdle: false, renderer: L.canvas({padding: 0.25})}).addTo(this.map);
+						this.countyLayer = L.geoJson(countyGeometry, {style: this.styleFeature, onEachFeature: onEachCountyFeature, smoothFactor: 0.5, updateWhenIdle: false, renderer: L.canvas({padding: 0.25})});
+						this.countyLayer.addTo(this.map);
 						L.geoJson(stateData, {style: {fillOpacity: 0, weight: 1, color: 'gray'}, smoothFactor: 0, interactive: false, updateWhenIdle: false, renderer: L.svg({padding: 0.25})}).addTo(this.map);
 						this.citylayer = L.geoJson(placesGeometry, {smoothFactor: 1, interactive: false, renderer: L.svg({padding: 0})});
-
+						this.refreshCountyColoring();
 						const counties = countyGeometry.features.map(f => ({
 							name: f.properties.name,
 							state: f.properties.state,
