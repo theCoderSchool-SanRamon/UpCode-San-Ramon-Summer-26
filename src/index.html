@@ -271,15 +271,15 @@
 			</div>
 			<Transition>
 				<div id="load-splash" v-show="appLoaded">
-					<img id="load-pinwheel" src="loading-9.gif"></img>
+					<img id="load-pinwheel" src="assets/loading-9.gif"></img>
 				</div>
 			</Transition>
 		</div>
 		<script type="module">
-			var stateData = fetch("states.geojson", {headers: {'Content-Type': 'application/json'}});
-			var countyGeometry = fetch("counties.geojson", {headers: {'Content-Type': 'application/json'}});
-			var countyProperties = fetch("countydata.json", {headers: {'Content-Type': 'application/json'}});
-			var placesGeometry = fetch("places.geojson", {headers: {'Content-Type': 'application/json'}});
+			var stateData = fetch("assets/states.geojson", {headers: {'Content-Type': 'application/json'}});
+			var countyGeometry = fetch("assets/counties.geojson", {headers: {'Content-Type': 'application/json'}});
+			var countyProperties = fetch("assets/countydata.json", {headers: {'Content-Type': 'application/json'}});
+			var placesGeometry = fetch("assets/places.geojson", {headers: {'Content-Type': 'application/json'}});
 			stateData = await stateData;
 			countyGeometry = await countyGeometry;
 			countyProperties = await countyProperties;
