@@ -8,13 +8,13 @@ import requests
 
 cache={}
 
-def query(place,state,get):
+def query(place,state:str,get):
 	url = "https://api.census.gov/data/2024/acs/acs5"
 
 	params = {
 	'get':get,#'NAME,B01001_001E',
 	'for':f'place:{place}',
-	'in':f'state:{state}',
+	'in':f'state:{state.rjust(2,"0")}',
 	'key':key,
 	}
 	if (place,state,get) in cache: 
