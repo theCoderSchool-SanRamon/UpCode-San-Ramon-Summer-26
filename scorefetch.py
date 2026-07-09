@@ -1,6 +1,6 @@
 import sqlite3, requests
 
-key = "4ecf6f899a9e4587c6289422a3850d0fb9803dbc"
+with open(".census_key", "r") as f: key = f.read().strip()
 
 conn = sqlite3.connect("census.db")
 cursor = conn.cursor()
