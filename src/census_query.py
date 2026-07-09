@@ -8,12 +8,12 @@ import requests
 
 cache={}
 
-def query(place,state:str,get):
+def query_place(place,state:str,get):
 	url = "https://api.census.gov/data/2024/acs/acs5"
 
 	params = {
 	'get':get,#'NAME,B01001_001E',
-	'for':f'place:{place}',
+	'for':f'place:{place.rjust(5,"0")}',
 	'in':f'state:{state.rjust(2,"0")}',
 	'key':key,
 	}
@@ -23,4 +23,21 @@ def query(place,state:str,get):
 		response = requests.get(url, params=params)
 		data = response.json()
 		cache[(place,state,get)]=data
+		return data
+
+def query_county(county,state:str,get):
+	url = "https://api.census.gov/data/2024/acs/acs5"
+
+	params = {
+	'get':get,#'NAME,B01001_001E',
+	'for':f'county:{county.rjust(3,"0")}',
+	'in':f'state:{state.rjust(2,"0")}',
+	'key':key,
+	}
+	if (county,state,get) in cache: 
+		return cache[(county,state,get)]
+	else:
+		response = requests.get(url, params=params)
+		data = response.json()
+		cache[(county,state,get)]=data
 		return data
