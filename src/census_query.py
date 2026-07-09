@@ -1,4 +1,6 @@
-with open(".census_key","r") as f: key=f.read()
+try:
+	with open(".census_key","r") as f: key=f.read()
+except FileNotFoundError: input("Census API Key not found. Please provide at .census_key.")
 import requests
 
 #place = "53980"
