@@ -6,6 +6,9 @@
 		<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 		<style>
 			* { box-sizing: border-box; margin: 0; padding: 0; }
+			:root {
+				--overlay-background: rgba(255,255,255,0.5);
+			}
 			html, body, #app {
 				height: 100%;
 				overflow: hidden;
@@ -37,6 +40,8 @@
 				background: white;
 				border-radius: 8px;
 			}
+
+
 			.v-enter-active, .v-leave-active {
 				transition: opacity 0.5s ease;
 			}
@@ -44,16 +49,24 @@
 				opacity: 0;
 			}
 
-			.v-enter-active #infopanel,
-			.v-leave-active #infopanel {
+			.fast-enter-active, .fast-leave-active {
+				transition: opacity 0.15s ease;
+			}
+			.fast-enter-from, .fast-leave-to {
+				opacity: 0;
+			}
+
+			.popup-enter-active,
+			.popup-leave-active {
 				transition: transform 0.4s cubic-bezier(0.16, 1, 0.5, 1);
 			}
-			.v-enter-from #infopanel {
+			.popup-enter-from {
 				transform: scale(0.9) translateY(130%);
 			}
-			.v-leave-to #infopanel {
+			.popup-leave-to {
 				transform: scale(0.9);
 			}
+
 
 			#sidebar {
 				width: 280px;
@@ -95,7 +108,7 @@
 			}
 			.search-input {
 				width: 100%;
-				background: rgba(255,255,255,0.5);
+				background: var(--overlay-background);
 				backdrop-filter: blur(5px);
 				padding: 8px 10px;
 				font: 14px Arial, sans-serif;
@@ -136,18 +149,20 @@
 				margin-left: 4px;
 			}
 			#leaderboard {
-				width: 320px;
+				/*width: 340px;*/
+				display:flex;
 				max-height: calc(100% - 16px);
 				flex-shrink: 0;
 				position: fixed;
-				top: 8px;
+				top: 24px;
 				right: 8px;
 				z-index: 100;
 				padding: 16px;
-				background: rgba(255,255,255,0.75);
+				outline: none;
+				border: 1px solid #ccc;
+				background: var(--overlay-background);
 				backdrop-filter: blur(5px);
-				box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
-				border-radius: 8px;
+				border-radius: 14px;
 				overflow-y: auto;
 				font: 13px Arial, sans-serif;
 			}
@@ -170,9 +185,14 @@
 				cursor: pointer;
 				user-select: none;
 				white-space: nowrap;
+
+			}
+			#leaderboard-inner {
+				flex-direction: row;
 			}
 			#leaderboard th:hover {
 				color: #000;
+				
 			}
 			#leaderboard th.active {
 				color: #000;
@@ -180,13 +200,16 @@
 			}
 			#leaderboard tbody tr {
 				cursor: pointer;
+				transition: 
+					background 0.2s ease-in-out;
 			}
+
 			#leaderboard tbody tr:hover {
-				background: #f5f5f5;
+				background: #00ddff;
 			}
+
 			#leaderboard td {
 				padding: 4px 6px;
-				border-top: 1px solid #eee;
 			}
 			#leaderboard td.rank {
 				color: #999;
@@ -201,7 +224,7 @@
 				position: fixed;
 			}
 			.hover-box {
-				z-index: 5555;
+				z-index: 90;
 				pointer-events: none;
 				position: fixed;
 				padding: 6px 8px;
@@ -212,9 +235,8 @@
 				border-radius: 5px;
 				user-select: none;
 			}
-			.hover-box h4 {
+			.hover-box h2 {
 				margin: 0 0 5px;
-				color: #777;
 			}
 			.leaflet-control-container {
 				user-select: none;
@@ -236,6 +258,10 @@
 			}
 			#load-pinwheel {
 				width: 10%;
+			}
+			#infopane_content h1 {
+				align-self: center;
+				text-align: center:
 			}
 		</style>
 	</head>
@@ -315,40 +341,41 @@
 			
 			<div id="map-wrapper">
 				<div id="map"></div>
-				<div class="hover-box" v-show="isHovering && panning<=0" :style="{left: mouseX + 12 + 'px', top: mouseY + 20 + 'px'}" v-html="infoHTML"></div>
-							<Transition>
+				<Transition name="fast"><div class="hover-box" id="hover-box" v-show="isHovering && panning<=0" :style="{left: mouseX + 12 + 'px', top: mouseY + 20 + 'px'}" v-html="infoHTML"></div></Transition>
 				<div id="infopanel-shade" v-if="showInfoPanel" @click.self="showInfoPanel=false">	
 					
-					<div id="infopanel" v-html="infoPanelHTML">
+					<Transition name="popup"><div id="infopanel" v-html="infoPanelHTML"></Transition>
 						
 					</div>
 				</div>
-			</Transition>
+	
 			</div>
 			<div id="leaderboard">
-				<h4>Investment Score Leaderboard</h4>
-				<table>
-					<thead>
-						<tr>
-							<th>Rank</th>
-							<th @click="setLeaderboardSort('name')" :class="{active: leaderboardSortKey==='name'}">County</th>
-							<th @click="setLeaderboardSort('state')" :class="{active: leaderboardSortKey==='state'}">State</th>
-							<th @click="setLeaderboardSort('score')" :class="{active: leaderboardSortKey==='score'}">Score</th>
-							<th @click="setLeaderboardSort('ratio')" :class="{active: leaderboardSortKey==='ratio'}">Ratio</th>
-							<th @click="setLeaderboardSort('rentGrowth')" :class="{active: leaderboardSortKey==='rentGrowth'}">Rent&nbsp;Growth</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr v-for="county in leaderboard" :key="county.key" @click="selectCounty(county)">
-							<td class="rank">{{ county.rank }}</td>
-							<td>{{ county.name }}</td>
-							<td>{{ county.state }}</td>
-							<td>{{ county.score.toFixed(1) }}</td>
-							<td>{{ county.ratio == null ? 'N/A' : county.ratio.toFixed(2) }}</td>
-							<td>{{ county.rentGrowth == null ? 'N/A' : (county.rentGrowth*100).toFixed(1) + '%' }}</td>
-						</tr>
-					</tbody>
-				</table>
+				<div id="leaderboard-inner">
+					<h4>Investment Rankings</h4>
+					<table>
+						<thead>
+							<tr>
+								<th>Rank</th>
+								<th @click="setLeaderboardSort('name')" :class="{active: leaderboardSortKey==='name'}">County</th>
+								<th @click="setLeaderboardSort('state')" :class="{active: leaderboardSortKey==='state'}">State</th>
+								<th @click="setLeaderboardSort('score')" :class="{active: leaderboardSortKey==='score'}">Score</th>
+								<th @click="setLeaderboardSort('ratio')" :class="{active: leaderboardSortKey==='ratio'}">Ratio</th>
+								<th @click="setLeaderboardSort('rentGrowth')" :class="{active: leaderboardSortKey==='rentGrowth'}">Rent&nbsp;Growth</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr v-for="county in leaderboard" :key="county.key" @click="selectCounty(county)">
+								<td class="rank">{{ county.rank }}</td>
+								<td>{{ county.name }}</td>
+								<td>{{ county.state }}</td>
+								<td>{{ county.score.toFixed(1) }}</td>
+								<td>{{ county.ratio == null ? 'N/A' : county.ratio.toFixed(2) }}</td>
+								<td>{{ county.rentGrowth == null ? 'N/A' : (county.rentGrowth*100).toFixed(1) + '%' }}</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
 			</div>
 			<Transition>
 				<div id="load-splash" v-show="appLoaded">
@@ -381,7 +408,7 @@
 						mouseX: 50,
 						mouseY: 50,
 						colorMaxVal: 50,
-						cityZoomThreshold: 9,
+						cityZoomThreshold: 0,
 						infoHTML: "",
 						searchQuery: "",
 						allCounties: [],
@@ -508,17 +535,26 @@
 					},
 					updateInfo(key) {
 						const county = countyProperties[key];
-						this.infoHTML = '<h4>County Price Info</h4>' + (county ?
-							'<b>' + key.replace("_", ", ") + '</b><br />' + (county.houseprice == null ? "N/A" : 'Price/Rent Ratio: <b>' + (county.houseprice / county.rent /12).toFixed(2) + '</b><br>Median Contract Rent: $<b>' + county.rent.toString() + '</b>/mo<br>Median House Price: $<b>' + county.houseprice.toString()  + '</b>') + this.scoreBreakdownHTML(county)
-							: 'Hover over a county');
-						this.infoPanelHTML = '<h4>Detailed County Information</h4>' + (county ?
-							'<b>' + key.replace("_", ", ") + '</b><br />' + (county.houseprice == null ? "N/A" : 'Price/Rent Ratio: <b>' + (county.houseprice / county.rent /12).toFixed(2) + '</b><br>Median Contract Rent: $<b>' + county.rent.toString() + '</b>/mo<br>Median House Price: $<b>' + county.houseprice.toString() + '</b><br>Population: <b>' + county.population.toString() + '</b><br>Annual Population Change: <b>' + county.populationchange.toString() + '</b>/year<br>Median Income: $<b>' + (county.income != null ? county.income.toString() : 'N/A')  + '/year</b>') + this.scoreBreakdownHTML(county)
-							: 'Hover over a county');
+						this.infoHTML = (county ?
+							`<b><h2>${key.replace("_", ", ")}</h2></b>
+							${(county.houseprice == null ? "N/A" : `
+							<h3>${county.score}</h3>
+							Price/Rent Ratio: <b>${(county.houseprice / county.rent /12).toFixed(2)}</b><br>
+							Median Contract Rent: $<b>${county.rent.toString()}</b>/mo<br>
+							Median House Price: $<b>${county.houseprice.toString()}</b>`)}
+							${this.scoreBreakdownHTML(county)}
+							` : 'Hover over a county');
+						this.infoPanelHTML = `
+						<div id="infopane_content">
+							<h1>Detailed County Information</h1>
+						</div>
+						`
+
 					},
 					scoreBreakdownHTML(county) {
 						if (!county || county.score == null) return '';
 						const pct = v => v == null ? 'N/A' : (v * 100).toFixed(1) + '%';
-						return '<br>Investment Score: <b>' + county.score.toFixed(1) + '/100</b>' + (county.partialData ? ' <i>(partial data)</i>' : '')
+						return '<br>Investment Score: <b>' + county.score.toFixed(1) + '</b>' + (county.partialData ? ' <i>(partial data)</i>' : '')
 							+ '<br>Appreciation: <b>' + pct(county.apprec) + '</b>'
 							+ '<br>Rent Growth (5yr): <b>' + pct(county.rentGrowth) + '</b>'
 							+ '<br>Property Tax Rate: <b>' + pct(county.tax) + '</b>'
