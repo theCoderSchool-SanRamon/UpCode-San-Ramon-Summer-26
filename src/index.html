@@ -135,6 +135,62 @@
 				background-color: #f5f5f5;
 				margin-left: 4px;
 			}
+			#leaderboard {
+				width: 320px;
+				max-height: calc(100% - 16px);
+				flex-shrink: 0;
+				position: fixed;
+				top: 8px;
+				right: 8px;
+				z-index: 100;
+				padding: 16px;
+				background: rgba(255,255,255,0.75);
+				backdrop-filter: blur(5px);
+				box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+				border-radius: 8px;
+				overflow-y: auto;
+				font: 13px Arial, sans-serif;
+			}
+			#leaderboard h4 {
+				margin: 0 0 8px;
+				color: #777;
+			}
+			#leaderboard table {
+				width: 100%;
+				border-collapse: collapse;
+			}
+			#leaderboard th {
+				position: sticky;
+				top: 0;
+				background: rgba(255,255,255,0.9);
+				text-align: left;
+				padding: 4px 6px;
+				font-size: 12px;
+				color: #555;
+				cursor: pointer;
+				user-select: none;
+				white-space: nowrap;
+			}
+			#leaderboard th:hover {
+				color: #000;
+			}
+			#leaderboard th.active {
+				color: #000;
+				font-weight: bold;
+			}
+			#leaderboard tbody tr {
+				cursor: pointer;
+			}
+			#leaderboard tbody tr:hover {
+				background: #f5f5f5;
+			}
+			#leaderboard td {
+				padding: 4px 6px;
+				border-top: 1px solid #eee;
+			}
+			#leaderboard td.rank {
+				color: #999;
+			}
 			#map-wrapper {
 				flex: 1;
 				position: relative;
@@ -269,6 +325,31 @@
 				</div>
 			</Transition>
 			</div>
+			<div id="leaderboard">
+				<h4>Investment Score Leaderboard</h4>
+				<table>
+					<thead>
+						<tr>
+							<th>Rank</th>
+							<th @click="setLeaderboardSort('name')" :class="{active: leaderboardSortKey==='name'}">County</th>
+							<th @click="setLeaderboardSort('state')" :class="{active: leaderboardSortKey==='state'}">State</th>
+							<th @click="setLeaderboardSort('score')" :class="{active: leaderboardSortKey==='score'}">Score</th>
+							<th @click="setLeaderboardSort('ratio')" :class="{active: leaderboardSortKey==='ratio'}">Ratio</th>
+							<th @click="setLeaderboardSort('rentGrowth')" :class="{active: leaderboardSortKey==='rentGrowth'}">Rent&nbsp;Growth</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr v-for="county in leaderboard" :key="county.key" @click="selectCounty(county)">
+							<td class="rank">{{ county.rank }}</td>
+							<td>{{ county.name }}</td>
+							<td>{{ county.state }}</td>
+							<td>{{ county.score.toFixed(1) }}</td>
+							<td>{{ county.ratio == null ? 'N/A' : county.ratio.toFixed(2) }}</td>
+							<td>{{ county.rentGrowth == null ? 'N/A' : (county.rentGrowth*100).toFixed(1) + '%' }}</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
 			<Transition>
 				<div id="load-splash" v-show="appLoaded">
 					<img id="load-pinwheel" src="assets/loading-9.gif"></img>
@@ -309,6 +390,8 @@
 						citySuggestions: [],
 						suggestionDebounceTimer: null,
 						ZIPSuggestions: [],
+						leaderboardSortKey: 'score',
+						leaderboardSortDir: 'desc',
 					};
 				},
 				created() {
@@ -335,6 +418,17 @@
 							}
 						}
 						return [...startsWith, ...includes].slice(0, 12);
+					},
+					leaderboard() {
+						const ranked = Object.keys(countyProperties)
+							.filter(k => countyProperties[k].score != null)
+							.map(k => ({key: k, name: k.split('_')[0], state: k.split('_')[1], ...countyProperties[k]}))
+							.sort((a, b) => b.score - a.score)
+							.slice(0, 25)
+							.map((c, i) => ({...c, rank: i + 1}));
+						const key = this.leaderboardSortKey;
+						const dir = this.leaderboardSortDir === 'asc' ? 1 : -1;
+						return [...ranked].sort((a, b) => a[key] < b[key] ? -dir : a[key] > b[key] ? dir : 0);
 					}
 				},
 				watch: {
@@ -413,12 +507,30 @@
 						this.searchSuggestions = [];
 					},
 					updateInfo(key) {
-						this.infoHTML = '<h4>County Price Info</h4>' + (countyProperties[key] ?
-							'<b>' + key.replace("_", ", ") + '</b><br />' + (countyProperties[key].houseprice == null ? "N/A" : 'Price/Rent Ratio: <b>' + (countyProperties[key].houseprice / countyProperties[key].rent /12).toFixed(2) + '</b><br>Median Contract Rent: $<b>' + countyProperties[key].rent.toString() + '</b>/mo<br>Median House Price: $<b>' + countyProperties[key].houseprice.toString()  + '</b>')
+						const county = countyProperties[key];
+						this.infoHTML = '<h4>County Price Info</h4>' + (county ?
+							'<b>' + key.replace("_", ", ") + '</b><br />' + (county.houseprice == null ? "N/A" : 'Price/Rent Ratio: <b>' + (county.houseprice / county.rent /12).toFixed(2) + '</b><br>Median Contract Rent: $<b>' + county.rent.toString() + '</b>/mo<br>Median House Price: $<b>' + county.houseprice.toString()  + '</b>') + this.scoreBreakdownHTML(county)
 							: 'Hover over a county');
-						this.infoPanelHTML = '<h4>Detailed County Information</h4>' + (countyProperties[key] ?
-							'<b>' + key.replace("_", ", ") + '</b><br />' + (countyProperties[key].houseprice == null ? "N/A" : 'Price/Rent Ratio: <b>' + (countyProperties[key].houseprice / countyProperties[key].rent /12).toFixed(2) + '</b><br>Median Contract Rent: $<b>' + countyProperties[key].rent.toString() + '</b>/mo<br>Median House Price: $<b>' + countyProperties[key].houseprice.toString() + '</b><br>Population: <b>' + countyProperties[key].population.toString() + '</b><br>Annual Population Change: <b>' + countyProperties[key].populationchange.toString() + '</b>/year<br>Median Income: $<b>' + (countyProperties[key].income != null ? countyProperties[key].income.toString() : 'N/A')  + '/year</b>')
+						this.infoPanelHTML = '<h4>Detailed County Information</h4>' + (county ?
+							'<b>' + key.replace("_", ", ") + '</b><br />' + (county.houseprice == null ? "N/A" : 'Price/Rent Ratio: <b>' + (county.houseprice / county.rent /12).toFixed(2) + '</b><br>Median Contract Rent: $<b>' + county.rent.toString() + '</b>/mo<br>Median House Price: $<b>' + county.houseprice.toString() + '</b><br>Population: <b>' + county.population.toString() + '</b><br>Annual Population Change: <b>' + county.populationchange.toString() + '</b>/year<br>Median Income: $<b>' + (county.income != null ? county.income.toString() : 'N/A')  + '/year</b>') + this.scoreBreakdownHTML(county)
 							: 'Hover over a county');
+					},
+					scoreBreakdownHTML(county) {
+						if (!county || county.score == null) return '';
+						const pct = v => v == null ? 'N/A' : (v * 100).toFixed(1) + '%';
+						return '<br>Investment Score: <b>' + county.score.toFixed(1) + '/100</b>' + (county.partialData ? ' <i>(partial data)</i>' : '')
+							+ '<br>Appreciation: <b>' + pct(county.apprec) + '</b>'
+							+ '<br>Rent Growth (5yr): <b>' + pct(county.rentGrowth) + '</b>'
+							+ '<br>Property Tax Rate: <b>' + pct(county.tax) + '</b>'
+							+ '<br>Vacancy Rate: <b>' + pct(county.vac) + '</b>';
+					},
+					setLeaderboardSort(key) {
+						if (this.leaderboardSortKey === key) {
+							this.leaderboardSortDir = this.leaderboardSortDir === 'desc' ? 'asc' : 'desc';
+						} else {
+							this.leaderboardSortKey = key;
+							this.leaderboardSortDir = 'desc';
+						}
 					},
 					getColor(d,m,i) {
 						return isNaN(d) ? '#CFCFCF' : this.getColorMix(
