@@ -23,8 +23,16 @@ else:
 dataframe.to_sql("Loading", conn, index=False, dtype="INTEGER")
 
 preferred = input("Preferred column name: ").lower()
-cursor.execute(f"ALTER TABLE Costs ADD COLUMN {preferred} INTEGER")
-cursor.execute(f"UPDATE Costs SET {preferred} = (SELECT Loading.{columnname} FROM Loading WHERE Loading.state = Costs.state AND Loading.county = Costs.county)")
+if "county" in dataframe.columns:
+	cursor.execute(f"ALTER TABLE Costs ADD COLUMN {preferred} INTEGER")
+	cursor.execute(f"UPDATE Costs SET {preferred} = (SELECT Loading.{columnname} FROM Loading WHERE Loading.state = Costs.state AND Loading.county = Costs.county)")
+	print("Inserted into Costs.")
+elif "place" in dataframe.columns:
+	cursor.execute(f"ALTER TABLE PlaceAttributes ADD COLUMN {preferred} INTEGER")
+	cursor.execute(f"UPDATE PlaceAttributes SET {preferred} = (SELECT Loading.{columnname} FROM Loading WHERE Loading.state = PlaceAttributes.state AND Loading.place = PlaceAttributes.place)")
+	print("Inserted into PlaceAttributes.")
+else:
+	print("Unable to recognize data type.")
 cursor.execute("DROP TABLE Loading")
 conn.commit()
 conn.close()
