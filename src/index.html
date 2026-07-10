@@ -5,7 +5,7 @@
 		<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 		<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 		<style>
-			* { box-sizing: border-box; margin: 0; padding: 0; }
+			* { box-sizing: border-box; margin: 0; padding: 0; font: unset Arial, sans-serif; }
 			:root {
 				--overlay-background: rgba(255,255,255,0.5);
 			}
@@ -18,6 +18,7 @@
 				display: flex;
 				flex-direction: row;
 				position: relative;
+				
 			}
 			#infopanel-shade {
 				height: 100%;
@@ -35,10 +36,13 @@
 				height: 65%;
 				z-index: 102;
 				padding: 16px;
+				z-index:102;
 				margin-left: 17.5%;
 				margin-top: 11.6%;
 				background: white;
 				border-radius: 8px;
+				transition: transform 0.4s cubic-bezier(0.16, 1, 0.5, 1);
+				font: unset Arial, sans-serif;
 			}
 
 
@@ -64,6 +68,17 @@
 				transform: scale(0.9) translateY(130%);
 			}
 			.popup-leave-to {
+				transform: scale(0.9);
+			}
+
+			.v-enter-active #infopanel,
+			.v-leave-active #infopanel {
+				transition: transform 0.4s cubic-bezier(0.16, 1, 0.5, 1);
+			}
+			.v-enter-from #infopanel {
+				transform: scale(0.9) translateY(130%);
+			}
+			.v-leave-to #infopanel {
 				transform: scale(0.9);
 			}
 
@@ -292,7 +307,7 @@
 				border-radius: 5px;
 				user-select: none;
 			}
-			.hover-box h2 {
+			.hover-box h3 {
 				margin: 0 0 5px;
 			}
 			.leaflet-control-container {
@@ -317,6 +332,7 @@
 				width: 10%;
 			}
 			#infopane_content h1 {
+				font: unset Arial, sans-serif;
 				align-self: center;
 				text-align: center;
 			}
@@ -398,15 +414,15 @@
 			
 			<div id="map-wrapper">
 				<div id="map"></div>
+
 				<Transition name="fast"><div class="hover-box" id="hover-box" v-show="isHovering && panning<=0" :style="{left: mouseX + 12 + 'px', top: mouseY + 20 + 'px'}" v-html="infoHTML"></div></Transition>
-				<div id="infopanel-shade" v-if="showInfoPanel" @click.self="showInfoPanel=false">	
-					
-					<Transition name="popup"><div id="infopanel" v-html="infoPanelHTML"></Transition>
-						
-					</div>
-				</div>
-	
-			</div>
+				
+				<Transition> <div id="infopanel-shade" v-if="showInfoPanel" @click.self="showInfoPanel=false">
+					<Transition name="popup"> <div id="infopanel" v-if="showInfoPanel" v-html="infoPanelHTML"></div> </Transition>
+				</div> </Transition>
+				
+				
+			</div> 
 			<div id="leaderboard">
 				<div id="leaderboard-inner">
 					<h4>Investment Rankings</h4>
@@ -723,9 +739,8 @@
 					updateInfo(key) {
 						const county = countyProperties[key];
 						this.infoHTML = (county ?
-							`<b><h2>${key.replace("_", ", ")}</h2></b>
+							`<b><h3>${key.replace("_", ", ")}</h3></b>
 							${(county.houseprice == null ? "N/A" : `
-							<h3>${county.score}</h3>
 							Price/Rent Ratio: <b>${(county.houseprice / county.rent /12).toFixed(2)}</b><br>
 							Median Contract Rent: $<b>${county.rent.toString()}</b>/mo<br>
 							Median House Price: $<b>${county.houseprice.toString()}</b>`)}
