@@ -1,10 +1,9 @@
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
 
 import sqlite3
 
-import src.backend.census_query as census_query
+import census_query as census_query
 
 
 def load_local_headers():
@@ -75,4 +74,5 @@ def local_complete_county(county: str, state: str):
 load_local_headers()
 
 if __name__ == "__main__":
+	import uvicorn
 	uvicorn.run(app, host="0.0.0.0", port=8000)
