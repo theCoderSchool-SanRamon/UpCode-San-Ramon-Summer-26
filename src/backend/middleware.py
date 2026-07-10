@@ -4,7 +4,7 @@ import uvicorn
 
 import sqlite3
 
-import census_query
+import src.backend.census_query as census_query
 
 
 def load_local_headers():
