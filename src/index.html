@@ -214,6 +214,63 @@
 			#leaderboard td.rank {
 				color: #999;
 			}
+			#weights-panel {
+				display: flex;
+				flex-direction: column;
+				gap: 4px;
+				margin-bottom: 12px;
+				padding-bottom: 12px;
+				border-bottom: 1px solid #ccc;
+			}
+			#weights-panel h4 {
+				margin: 0 0 4px;
+				color: #777;
+			}
+			.weight-row {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				gap: 8px;
+				font: 12px Arial, sans-serif;
+				color: #333;
+			}
+			.weight-row input {
+				width: 60px;
+				font: 12px Arial, sans-serif;
+				border: 1px solid #ccc;
+				border-radius: 4px;
+				padding: 2px 4px;
+				outline: none;
+			}
+			.weight-row input:focus {
+				border-color: #666;
+			}
+			#weights-sum {
+				font: 12px Arial, sans-serif;
+				font-weight: bold;
+				color: #333;
+				margin-top: 4px;
+			}
+			#weights-sum.invalid {
+				color: #c0392b;
+			}
+			#weights-error {
+				font: 11px Arial, sans-serif;
+				color: #c0392b;
+			}
+			#weights-panel button {
+				align-self: flex-start;
+				margin-top: 6px;
+				font: 12px Arial, sans-serif;
+				padding: 4px 8px;
+				border: 1px solid #ccc;
+				border-radius: 6px;
+				background: white;
+				cursor: pointer;
+			}
+			#weights-panel button:hover {
+				border-color: #666;
+			}
 			#map-wrapper {
 				flex: 1;
 				position: relative;
@@ -353,6 +410,23 @@
 			<div id="leaderboard">
 				<div id="leaderboard-inner">
 					<h4>Investment Rankings</h4>
+					<div id="weights-panel">
+						<h4>Score Weights</h4>
+						<div class="weight-row" v-for="f in weightFields" :key="f.key">
+							<label :for="'weight-' + f.key">{{ f.label }}</label>
+							<input
+								:id="'weight-' + f.key"
+								type="number"
+								min="0"
+								max="1"
+								step="0.05"
+								v-model.number="weights[f.key]"
+							/>
+						</div>
+						<div id="weights-sum" :class="{invalid: !weightsValid}">Sum: {{ weightsSum.toFixed(2) }}</div>
+						<div id="weights-error" v-if="weightsError">{{ weightsError }}</div>
+						<button type="button" @click="resetWeights">Reset to defaults</button>
+					</div>
 					<table>
 						<thead>
 							<tr>
@@ -397,6 +471,72 @@
 			countyProperties = await countyProperties.json();
 			placesGeometry = await placesGeometry.json();
 			const appLoaded = true
+
+			const FACTORS = {
+				ratio: {invert: true},
+				apprec: {invert: false},
+				rentGrowth: {invert: false},
+				tax: {invert: true},
+				vac: {invert: true},
+			};
+			const DEFAULT_WEIGHTS = {ratio: 0.30, apprec: 0.25, rentGrowth: 0.15, tax: 0.15, vac: 0.15};
+
+			function percentile(sortedVals, p) {
+				const k = (sortedVals.length - 1) * p;
+				const f = Math.floor(k), c = Math.ceil(k);
+				if (f === c) return sortedVals[k];
+				return sortedVals[f] * (c - k) + sortedVals[c] * (k - f);
+			}
+
+			function buildNormalizedCache(countyProperties) {
+				const ranges = {};
+				for (const name in FACTORS) {
+					const vals = Object.values(countyProperties)
+						.map(c => c[name])
+						.filter(v => v != null)
+						.sort((a, b) => a - b);
+					if (!vals.length) continue;
+					const p5 = percentile(vals, 0.05), p95 = percentile(vals, 0.95);
+					const clamped = vals.map(v => Math.min(Math.max(v, p5), p95));
+					ranges[name] = {p5, p95, min: Math.min(...clamped), max: Math.max(...clamped)};
+				}
+				const normalized = {};
+				for (const key in countyProperties) {
+					const county = countyProperties[key];
+					const norms = {};
+					for (const name in FACTORS) {
+						const raw = county[name];
+						const r = ranges[name];
+						if (raw == null || !r) { norms[name] = null; continue; }
+						const v = Math.min(Math.max(raw, r.p5), r.p95);
+						let norm;
+						if (r.max === r.min) norm = 1.0;
+						else norm = FACTORS[name].invert ? (r.max - v) / (r.max - r.min) : (v - r.min) / (r.max - r.min);
+						norms[name] = Math.min(Math.max(norm, 0.0), 1.0);
+					}
+					normalized[key] = norms;
+				}
+				return normalized;
+			}
+
+			function computeScore(norms, weights) {
+				let weightedSum = 0.0, weightPresent = 0.0;
+				for (const name in FACTORS) {
+					const norm = norms[name];
+					if (norm == null) continue;
+					weightedSum += weights[name] * norm;
+					weightPresent += weights[name];
+				}
+				if (weightPresent > 0) {
+					const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0);
+					return {
+						score: Math.round(100 * weightedSum / weightPresent * 10) / 10,
+						partialData: weightPresent < totalWeight - 1e-9,
+					};
+				}
+				return {score: null, partialData: true};
+			}
+
 			const { createApp } = Vue;
 			const app = createApp({
 				data() {
@@ -419,6 +559,16 @@
 						ZIPSuggestions: [],
 						leaderboardSortKey: 'score',
 						leaderboardSortDir: 'desc',
+						weights: {...DEFAULT_WEIGHTS},
+						scoreRevision: 0,
+						hoveredKey: null,
+						weightFields: [
+							{key: 'ratio', label: 'Price-to-Rent'},
+							{key: 'apprec', label: 'Appreciation'},
+							{key: 'rentGrowth', label: 'Rent Growth'},
+							{key: 'tax', label: 'Property Tax'},
+							{key: 'vac', label: 'Vacancy'},
+						],
 					};
 				},
 				created() {
@@ -427,6 +577,8 @@
 						this.countyLayer = null;
 						this.countyLayers = {};
 						this.highlightedLayer = null;
+						this.normalizedCache = buildNormalizedCache(countyProperties);
+						this.recomputeScores();
 				},
 				computed: {
 					filteredCounties() {
@@ -446,7 +598,22 @@
 						}
 						return [...startsWith, ...includes].slice(0, 12);
 					},
+					weightsSum() {
+						return Object.values(this.weights).reduce((a, b) => a + (typeof b === 'number' && !isNaN(b) ? b : 0), 0);
+					},
+					weightsAllNumeric() {
+						return Object.values(this.weights).every(w => typeof w === 'number' && !isNaN(w) && w >= 0 && w <= 1);
+					},
+					weightsValid() {
+						return this.weightsAllNumeric && Math.abs(this.weightsSum - 1.0) < 0.001;
+					},
+					weightsError() {
+						if (!this.weightsAllNumeric) return 'Each weight must be a number between 0.00 and 1.00.';
+						if (!this.weightsValid) return `Weights sum to ${this.weightsSum.toFixed(2)} — must equal 1.00`;
+						return null;
+					},
 					leaderboard() {
+						this.scoreRevision;
 						const ranked = Object.keys(countyProperties)
 							.filter(k => countyProperties[k].score != null)
 							.map(k => ({key: k, name: k.split('_')[0], state: k.split('_')[1], ...countyProperties[k]}))
@@ -471,11 +638,31 @@
 						}
 
 					},
+					weights: {
+						deep: true,
+						handler() {
+							if (this.weightsValid) this.recomputeScores();
+						},
+					},
 				},
 				mounted() {
 					this.initMap();
 				},
 				methods: {
+					recomputeScores() {
+						for (const key in countyProperties) {
+							const norms = this.normalizedCache[key];
+							if (!norms) continue;
+							const {score, partialData} = computeScore(norms, this.weights);
+							countyProperties[key].score = score;
+							countyProperties[key].partialData = partialData;
+						}
+						this.scoreRevision++;
+						if (this.hoveredKey) this.updateInfo(this.hoveredKey);
+					},
+					resetWeights() {
+						this.weights = {...DEFAULT_WEIGHTS};
+					},
 					handleBlur() {
 						this.searchQuery = "";
 					},
@@ -633,6 +820,7 @@
 							layer.on({
 								mouseover: (e) => {
 									this.isHovering = true;
+									this.hoveredKey = key;
 									this.updateInfo(key);
 									if (this.highlightedLayer) {this.highlightedLayer.setStyle(this.styleFeature(this.highlightedLayer.feature));}
 								},
