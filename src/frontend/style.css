@@ -1,1 +1,13 @@
 @import "node_modules/ol/ol.css";
+
+#app {
+	display: flex;
+	flex-direction: row;
+	position: relative;
+	
+}
+html, body, #app {
+	height: 100%;
+	overflow: hidden;
+	transform: translate3d(0,0,0); 
+}

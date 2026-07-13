@@ -4,6 +4,8 @@ import OSM from 'ol/source/OSM.js';
 import TileLayer from 'ol/layer/Tile.js';
 import View from 'ol/View.js';
 
-import App from './components/App'
+import App from './components/App.vue'
 
 createApp(App).mount('#app')
+
+console.log("hi")

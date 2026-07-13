@@ -10,7 +10,8 @@ const mapRoot = ref(null)
 let mapInstance = null
 
 onMounted(() => 
-	mapInstance = new Map({
+	{
+		mapInstance = new Map({
 		target: mapRoot.value,
 		layers: [
 			new TileLayer({
@@ -22,6 +23,7 @@ onMounted(() =>
 			zoom: 2,
 		}),
 	});
+}
 )
 </script>
 
@@ -30,5 +32,8 @@ onMounted(() =>
 </template>
 
 <style scoped>
-@import "node_modules/ol/ol.css";
+	.map {
+		width: 400px;
+		height: 400px;
+	}
 </style>
