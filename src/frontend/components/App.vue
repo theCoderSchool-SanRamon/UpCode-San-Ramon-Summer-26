@@ -6,12 +6,16 @@ import Map from './map.vue'
 
 <template>
 
+<div id="layer_root_overlay"></div>
 <Map id="map" />
 
 </template>
 
 <style scoped>
-.map {
-	width: 100%;
+#map {
+		height: 100%;
+		width: 100%;
+		position: fixed;
 }
+
 </style>

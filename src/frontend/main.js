@@ -5,7 +5,8 @@ import TileLayer from 'ol/layer/Tile.js';
 import View from 'ol/View.js';
 
 import App from './components/App.vue'
+import './style.css'
+import 'ol/ol.css';
+
 
 createApp(App).mount('#app')
-
-console.log("hi")
