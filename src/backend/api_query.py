@@ -24,7 +24,7 @@ class CensusRequester(APIRequester):
 			print("Census API Key not found. Please provide at .census_key.")
 	def send_query(self, **params: dict):
 		if "place" in params and "county" in params: raise HTTPException(status_code=400, detail="place and county may not be used together.")
-		if not "place" in params and not "county" in params: raise HTTPException(status_code=400, detail="place or county must be provided.")place and county may not be used together.")
+		if not "place" in params and not "county" in params: raise HTTPException(status_code=400, detail="place or county must be provided.")
 		if "place" in params: params["for"] = params.pop("place").rjust(5,"0")
 		if "county" in params: params["for"] = params.pop("county").rjust(3,"0")
 		if not len(params["for"]) in (3, 5): raise HTTPException(status_code=400, detail="Invalid for argument.")

@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 import sqlite3
 
-import src.backend.api_query as api_query
+import api_query as api_query
 
 
 app = FastAPI()
