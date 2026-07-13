@@ -1,14 +1,25 @@
-try:
-	with open(".census_key", "r") as f:
-		key = f.read()
-except FileNotFoundError:
-	input("Census API Key not found. Please provide at .census_key.")
 import requests
 
 # place = "53980"
 # state = "06"
 
 cache = {}
+
+class APIRequester():
+	def __init__(self, url: str):
+		self.url = url
+	def send_query(self, params: dict):
+		return requests.get(self.url, params=params)
+
+
+class CensusRequester():
+	def __init__(self):
+		try:
+			with open(".census_key", "r") as f:
+				key = f.read()
+		except FileNotFoundError:
+			input("Census API Key not found. Please provide at .census_key.")
+
 
 
 def query_place(place, state: str, get):
