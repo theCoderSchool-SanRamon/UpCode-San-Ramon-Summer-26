@@ -79,8 +79,9 @@ for (
 		and vacDenom > 0
 		else None
 	)
-
+	
 	counties[key] = {
+		"population": population,
 		"ratio": ratio,
 		"apprec": apprec,
 		"rentGrowth": rentGrowth,

@@ -290,6 +290,34 @@
 				flex: 1;
 				position: relative;
 			}
+			#population-filter {
+				position: absolute;
+				bottom: 60px;
+				left: 24px;
+				z-index: 100;
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				padding: 10px 14px;
+				background: var(--overlay-background);
+				backdrop-filter: blur(5px);
+				border: 1px solid #ccc;
+				border-radius: 12px;
+				font: 14px Arial, sans-serif;
+				color: #555;
+			}
+			#population-filter select {
+				font: 14px Arial, sans-serif;
+				border: 1px solid #ccc;
+				border-radius: 6px;
+				padding: 5px 8px;
+				outline: none;
+				background: white;
+				cursor: pointer;
+			}
+			#population-filter select:focus {
+				border-color: #666;
+			}
 			#map {
 				height: 100%;
 				width: 100%;
@@ -415,6 +443,17 @@
 			<div id="map-wrapper">
 				<div id="map"></div>
 
+				<div id="population-filter">
+					<label for="population-filter-select">Min. county population:</label>
+					<select id="population-filter-select" v-model="populationFilter">
+						<option value="all">All</option>
+						<option value="50k">50k+</option>
+						<option value="100k">100k+</option>
+						<option value="250k">250k+</option>
+						<option value="500k">500k+</option>
+					</select>
+				</div>
+
 				<Transition name="fast"><div class="hover-box" id="hover-box" v-show="isHovering && panning<=0" :style="{left: mouseX + 12 + 'px', top: mouseY + 20 + 'px'}" v-html="infoHTML"></div></Transition>
 				
 				<Transition> <div id="infopanel-shade" v-if="showInfoPanel" @click.self="showInfoPanel=false">
@@ -496,6 +535,12 @@
 				vac: {invert: true},
 			};
 			const DEFAULT_WEIGHTS = {ratio: 0.30, apprec: 0.25, rentGrowth: 0.15, tax: 0.15, vac: 0.15};
+			const POPULATION_THRESHOLDS = {all: 0, '50k': 50000, '100k': 100000, '250k': 250000, '500k': 500000};
+
+			function countyMeetsThreshold(county, threshold) {
+				if (threshold <= 0) return true;
+				return county.population != null && county.population >= threshold;
+			}
 
 			function percentile(sortedVals, p) {
 				const k = (sortedVals.length - 1) * p;
@@ -504,11 +549,12 @@
 				return sortedVals[f] * (c - k) + sortedVals[c] * (k - f);
 			}
 
-			function buildNormalizedCache(countyProperties) {
+			function buildNormalizedCache(countyProperties, populationThreshold) {
 				const ranges = {};
 				for (const name in FACTORS) {
-					const vals = Object.values(countyProperties)
-						.map(c => c[name])
+					const vals = Object.keys(countyProperties)
+						.filter(k => countyMeetsThreshold(countyProperties[k], populationThreshold))
+						.map(k => countyProperties[k][name])
 						.filter(v => v != null)
 						.sort((a, b) => a - b);
 					if (!vals.length) continue;
@@ -576,6 +622,7 @@
 						leaderboardSortKey: 'score',
 						leaderboardSortDir: 'desc',
 						weights: {...DEFAULT_WEIGHTS},
+						populationFilter: 'all',
 						scoreRevision: 0,
 						hoveredKey: null,
 						weightFields: [
@@ -593,7 +640,7 @@
 						this.countyLayer = null;
 						this.countyLayers = {};
 						this.highlightedLayer = null;
-						this.normalizedCache = buildNormalizedCache(countyProperties);
+						this.normalizedCache = buildNormalizedCache(countyProperties, POPULATION_THRESHOLDS[this.populationFilter]);
 						this.recomputeScores();
 				},
 				computed: {
@@ -631,7 +678,7 @@
 					leaderboard() {
 						this.scoreRevision;
 						const ranked = Object.keys(countyProperties)
-							.filter(k => countyProperties[k].score != null)
+							.filter(k => countyProperties[k].score != null && this.countyVisible(countyProperties[k]))
 							.map(k => ({key: k, name: k.split('_')[0], state: k.split('_')[1], ...countyProperties[k]}))
 							.sort((a, b) => b.score - a.score)
 							.slice(0, 25)
@@ -660,6 +707,11 @@
 							if (this.weightsValid) this.recomputeScores();
 						},
 					},
+					populationFilter() {
+						this.normalizedCache = buildNormalizedCache(countyProperties, POPULATION_THRESHOLDS[this.populationFilter]);
+						this.recomputeScores();
+						this.refreshCountyColoring();
+					},
 				},
 				mounted() {
 					this.initMap();
@@ -678,6 +730,9 @@
 					},
 					resetWeights() {
 						this.weights = {...DEFAULT_WEIGHTS};
+					},
+					countyVisible(county) {
+						return countyMeetsThreshold(county, POPULATION_THRESHOLDS[this.populationFilter]);
 					},
 					handleBlur() {
 						this.searchQuery = "";
@@ -740,6 +795,7 @@
 						const county = countyProperties[key];
 						this.infoHTML = (county ?
 							`<b><h3>${key.replace("_", ", ")}</h3></b>
+							${this.countyVisible(county) ? '' : '<i>Filtered: population below threshold</i><br>'}
 							${(county.houseprice == null ? "N/A" : `
 							Price/Rent Ratio: <b>${(county.houseprice / county.rent /12).toFixed(2)}</b><br>
 							Median Contract Rent: $<b>${county.rent.toString()}</b>/mo<br>
@@ -789,6 +845,9 @@
 					},
 					styleFeature(feature) {
 						const county = countyProperties[feature.properties.name + '_' + feature.properties.state];
+						if (!this.countyVisible(county)) {
+							return {fillColor: '#B5B5B5', color: '#B5B5B5', weight: 12, opacity: 0.05, fillOpacity: 0.45};
+						}
 						const pricetorent = (county.houseprice/county.rent)/12;
 						/*const col = this.getColor(this.searchMode=='county' ? pricetorent : county.population,this.searchMode=='county' ? this.colorMaxVal : 70000, this.searchMode!='county');*/app
 						const col = this.getColor(pricetorent,this.colorMaxVal,false);
