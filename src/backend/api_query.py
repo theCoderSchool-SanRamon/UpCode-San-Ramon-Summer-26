@@ -7,9 +7,11 @@ import requests
 
 cache = {}
 
-class APIRequester():
+
+class APIRequester:
 	def __init__(self, url: str):
 		self.url = url
+
 	def send_query(self, **params: dict):
 		return requests.get(self.url, params=params)
 
@@ -22,16 +24,22 @@ class CensusRequester(APIRequester):
 			super().__init__("https://api.census.gov/data/2024/acs/acs5")
 		except FileNotFoundError:
 			print("Census API Key not found. Please provide at .census_key.")
+
 	def send_query(self, **params: dict):
-		if "place" in params: params["for"] = "place:" + params.pop("place").rjust(5,"0")
-		if "county" in params: params["for"] = "county:" + params.pop("county").rjust(3,"0")
-		if not len(params["for"]) in (10, 11): raise HTTPException(status_code=422, detail="Invalid for argument.")
-		if "state" in params: params["in"] = params.pop("state").rjust(2,"0")
-		if len(params["in"]) != 2: raise HTTPException(status_code=422, detail="Invalid in argument.")
+		if "place" in params:
+			params["for"] = "place:" + params.pop("place").rjust(5, "0")
+		if "county" in params:
+			params["for"] = "county:" + params.pop("county").rjust(3, "0")
+		if not len(params["for"]) in (10, 11):
+			raise HTTPException(status_code=422, detail="Invalid for argument.")
+		if "state" in params:
+			params["in"] = params.pop("state").rjust(2, "0")
+		if len(params["in"]) != 2:
+			raise HTTPException(status_code=422, detail="Invalid in argument.")
 		params["in"] = "state:" + params["in"]
 		params["key"] = self.key
-		response =  super().send_query(**params)
+		response = super().send_query(**params)
 		print(response.request.url)
 		output = response.json()
 		output.pop(0)
-		return {x[len(x) - 2] + x[len(x) - 1]: x[:len(x) - 2] for x in output}
+		return {x[len(x) - 2] + x[len(x) - 1]: x[: len(x) - 2] for x in output}
