@@ -18,19 +18,15 @@ app.add_middleware(  # we should figure this out
 
 @app.get("/census")
 def query_census(
-	query: str, state: int, place: int | None = None, county: int | None = None
+	query: str, state: str | None = None, place: str | None = None, county: str | None = None
 ):
 	if place != None and county != None:
 		raise HTTPException(
 			status_code=422, detail="place and county may not be used together."
 		)
-	elif place != None:
+	elif place != None or county != None:
 		return api_query.CensusRequester().send_query(
-			get=query, state=str(state), place=str(place)
-		)
-	elif county != None:
-		return api_query.CensusRequester().send_query(
-			get=query, state=str(state), county=str(county)
+			get=query, state=state, place=place, county=county
 		)
 	else:
 		raise HTTPException(status_code=422, detail="place or county must be provided.")
@@ -39,4 +35,4 @@ def query_census(
 if __name__ == "__main__":
 	import uvicorn
 
-	uvicorn.run(app, host="0.0.0.0", port=8000)
+	uvicorn.run(app, host="0.0.0.0", port=8080)

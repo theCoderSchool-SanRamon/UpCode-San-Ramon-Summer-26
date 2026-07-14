@@ -1,8 +1,22 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch} from 'vue'
 
-const searchQuery = ref("");
-
+const searchQuery = ref("")
+const searchSuggestions = ref([])
+const suggestionDebounceTimer = ref(null)
+/*
+watch()
+					searchQuery(val)
+						if (this.searchMode=='city') {
+							clearTimeout(this.suggestionDebounceTimer);
+							if (!val.trim()) { this.searchSuggestions = []; return; }
+							this.suggestionDebounceTimer = setTimeout(() => this.fetchCities(val), 350);
+						} else if (this.searchMode=='zip') {
+							clearTimeout(this.suggestionDebounceTimer);
+							if (!val.trim()) { this.searchSuggestions = []; return; }
+							this.suggestionDebounceTimer = setTimeout(() => this.fetchZIP(val), 350);
+						}
+*/
 </script>
 
 <template>
@@ -12,15 +26,27 @@ const searchQuery = ref("");
 	class="search-input"
 	type="text"
 	v-model="searchQuery"
-	placeholder="Search county..."
+	placeholder="Search for a place..."
 	autocomplete="off"
 	/>
+	<Transition>
+	<ul class="suggestions" v-if="searchQuery.length > 0">
+					<li
+						v-for="place in suggestions"
+						:key="place.key"
+						@mousedown.prevent="zoomTo(place)"
+					>
+						{{ place.name }}, {{ place.state }}
+					</li>
+				</ul>
+	</Transition>
 </div>
 </template>
 
 <style scoped>
 #search-wrapper {
-
+	min-width: 16px;
+	min-height: 16px;
 }
 .search-input {
 	width: 25%;
