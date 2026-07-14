@@ -1,13 +1,16 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import Map from './map.vue'
+import Search from './search.vue'
 
 </script>
 
 <template>
 
-<div id="layer_root_overlay"></div>
-<Map id="map" />
+<div id="layer_root_overlay">
+<Search id="search" />
+</div>
+<Map id='map' />
 
 </template>
 
