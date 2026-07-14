@@ -18,7 +18,7 @@ app.add_middleware(  # we should figure this out
 
 @app.get("/census")
 def query_census(
-	get: str, state: int, place: int | None = None, county: int | None = None
+	query: str, state: int, place: int | None = None, county: int | None = None
 ):
 	if place != None and county != None:
 		raise HTTPException(
@@ -26,11 +26,11 @@ def query_census(
 		)
 	elif place != None:
 		return api_query.CensusRequester().send_query(
-			get=get, state=str(state), place=str(place)
+			get=query, state=str(state), place=str(place)
 		)
 	elif county != None:
 		return api_query.CensusRequester().send_query(
-			get=get, state=str(state), county=str(county)
+			get=query, state=str(state), county=str(county)
 		)
 	else:
 		raise HTTPException(status_code=422, detail="place or county must be provided.")
