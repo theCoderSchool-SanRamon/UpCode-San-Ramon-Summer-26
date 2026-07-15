@@ -1,6 +1,6 @@
 import sqlite3, json, math
 
-DATA_PATH = "src/assets/countydata.json"
+DATA_PATH = "public/countydata.json"
 
 FACTORS = {
 	"ratio": {"weight": 0.30, "invert": True},

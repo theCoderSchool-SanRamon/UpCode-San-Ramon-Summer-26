@@ -10,15 +10,15 @@ import GeoJSON from 'ol/format/GeoJSON.js';
 import { defaults as defaultControls } from 'ol/control.js';
 import { Style, Fill, Stroke } from 'ol/style';
 import { fromLonLat } from 'ol/proj.js';
+import { useCountyScores } from '../composables/countyScores.js'
+
+const { countyScores, keyFor, ensureLoaded: ensureScoresLoaded, populationFilter, POPULATION_THRESHOLDS } = useCountyScores()
 
 const mapRoot = ref(null)
 let countyData = ref(null)
 
 let mapInstance = null
 let OSMLayer = null
-
-const POPULATION_THRESHOLDS = { all: 0, '50k': 50000, '100k': 100000, '250k': 250000, '500k': 500000 }
-const populationFilter = ref('all')
 
 const countyList = ref([])
 let countyFeaturesById = {}
@@ -37,6 +37,7 @@ const hoverInfo = computed(() => {
 	const houseprice = data ? Number(data[0]) : null
 	const rent = data ? Number(data[1]) : null
 	const population = data && data[2] != null ? Number(data[2]) : null
+	const scoreInfo = countyScores.value[keyFor(f.get("NAME"), f.get("STUSPS"))]
 	return {
 		name: f.get("NAME"),
 		state: f.get("STUSPS"),
@@ -44,6 +45,7 @@ const hoverInfo = computed(() => {
 		rent,
 		population,
 		ratio: (houseprice != null && rent) ? houseprice / rent / 12 : null,
+		score: scoreInfo?.score ?? null,
 		filtered: !countyMeetsThreshold(id, POPULATION_THRESHOLDS[populationFilter.value]),
 	}
 })
@@ -103,6 +105,7 @@ function getColorMix(s) {
 
 
 onMounted(async () => {
+	ensureScoresLoaded()
 
 	OSMLayer = new TileLayer({
 		source: new OSM(),
@@ -191,7 +194,8 @@ defineExpose({
 				Price/Rent Ratio: <b>{{ hoverInfo.ratio.toFixed(2) }}</b><br>
 				Median Contract Rent: $<b>{{ hoverInfo.rent }}</b>/mo<br>
 				Median House Price: $<b>{{ hoverInfo.houseprice }}</b><br>
-				Population: <b>{{ hoverInfo.population != null ? hoverInfo.population.toLocaleString() : 'N/A' }}</b>
+				Population: <b>{{ hoverInfo.population != null ? hoverInfo.population.toLocaleString() : 'N/A' }}</b><br>
+				<template v-if="hoverInfo.score != null">Investment Score: <b>{{ hoverInfo.score.toFixed(1) }}</b></template>
 			</template>
 			<template v-else>No price/rent data</template>
 		</div>
