@@ -54,7 +54,7 @@ const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 async function handleBlur(event) {
 	searchQuery.value = ''
 	searchSuggestions.value = []
-	if (event.relatedTarget !== null && !== searchModeSelectEntry.value){
+	if (event.relatedTarget !== searchModeSelectEntry.value){
 		await wait(200)
 		searchActive.value = false
 	} else {
