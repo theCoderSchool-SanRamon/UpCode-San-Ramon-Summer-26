@@ -78,9 +78,10 @@ function styleFeature(feature) {
 			fill: new Fill({ color: fillColor }),
 			stroke: new Stroke(
 				isHighlighted
-					? { color: '#F0CC00', width: 4 }
+					? { color: '#F0CC00', width: 8 }
 					: { color: '#00000053', width: 0.4 }
 			),
+			zIndex: isHighlighted ? 1 : 0
 		})
 	}
 
@@ -156,6 +157,7 @@ onMounted(async () => {
 		const feature = mapInstance.forEachFeatureAtPixel(evt.pixel, f => f, { layerFilter: l => l === countylayer })
 		hoveredFeature.value = feature ?? null
 		isHovering.value = !!feature
+		if (highlightedId.value != null && isHovering.value) {highlightedId.value = null}
 	})
 	mapInstance.getViewport().addEventListener('mouseout', () => { isHovering.value = false })
 })
