@@ -2,3 +2,4 @@
 __pycache__
 .census_key
 .venv
+node_modules
