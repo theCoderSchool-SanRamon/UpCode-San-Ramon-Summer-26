@@ -34,8 +34,8 @@ const hoverInfo = computed(() => {
 	if (!f) return null
 	const id = getCountyId(f)
 	const data = countyData && countyData[id]
-	const houseprice = data ? Number(data[0]) : null
-	const rent = data ? Number(data[1]) : null
+	const houseprice = data && data[0] > 0 ? Number(data[0]) : null
+	const rent = data && data[1] > 0 ? Number(data[1]) : null
 	const population = data && data[2] != null ? Number(data[2]) : null
 	const scoreInfo = countyScores.value[keyFor(f.get("NAME"), f.get("STUSPS"))]
 	return {
@@ -85,7 +85,7 @@ function styleFeature(feature) {
 	}
 
 function getColor(d, m, i) {
-	return isNaN(d) ? '#CFCFCF' : getColorMix(
+	return d <= 1 ? '#CFCFCF' : getColorMix(
 		(100 * (Math.min(d, m) / m)) < 50 ? `color-mix(
 		in srgb,
 		${i ? 'red' : 'green'},
@@ -190,14 +190,12 @@ defineExpose({
 		<div class="hover-box" v-if="isHovering && hoverInfo" :style="{ left: mouseX + 12 + 'px', top: mouseY + 20 + 'px' }">
 			<h3>{{ hoverInfo.name }}, {{ hoverInfo.state }}</h3>
 			<template v-if="hoverInfo.filtered"><i>Filtered: population below threshold</i><br></template>
-			<template v-if="hoverInfo.ratio != null">
-				Price/Rent Ratio: <b>{{ hoverInfo.ratio.toFixed(2) }}</b><br>
-				Median Contract Rent: $<b>{{ hoverInfo.rent }}</b>/mo<br>
-				Median House Price: $<b>{{ hoverInfo.houseprice }}</b><br>
-				Population: <b>{{ hoverInfo.population != null ? hoverInfo.population.toLocaleString() : 'N/A' }}</b><br>
-				<template v-if="hoverInfo.score != null">Investment Score: <b>{{ hoverInfo.score.toFixed(1) }}</b></template>
-			</template>
-			<template v-else>No price/rent data</template>
+			Price/Rent Ratio: <b>{{ hoverInfo.ratio == null ? "N/A" : hoverInfo.ratio.toFixed(2) }}</b><br>
+			Median Contract Rent: $<b>{{ hoverInfo.rent == null ? "N/A" : hoverInfo.rent }}</b>/mo<br>
+			Median House Price: $<b>{{ hoverInfo.houseprice == null ? "N/A" : hoverInfo.houseprice }}</b><br>
+			Population: <b>{{ hoverInfo.population != null ? hoverInfo.population.toLocaleString() : 'N/A' }}</b><br>
+			<template v-if="hoverInfo.score != null">Investment Score: <b>{{ hoverInfo.score.toFixed(1) }}</b></template>
+			<!--<template v-else>No price/rent data</template>-->
 		</div>
 		<div class="population-filter">
 			<label for="population-filter-select">Min. county population:</label>
