@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import Map from './map.vue'
 import Search from './search.vue'
+import Leaderboard from './Leaderboard.vue'
 
 const mapRef = ref(null)
 
@@ -19,6 +20,7 @@ function handleSelect(selection) {
 
 <div id="layer_root_overlay">
 <Search id="search" :counties="mapRef?.countyList ?? []" @select="handleSelect" />
+<Leaderboard :counties="mapRef?.countyList ?? []" @select="handleSelect" />
 </div>
 <Map id='map' ref="mapRef" />
 
