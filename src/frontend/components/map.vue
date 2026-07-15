@@ -79,7 +79,7 @@ function styleFeature(feature) {
 			stroke: new Stroke(
 				isHighlighted
 					? { color: '#F0CC00', width: 4 }
-					: { color: '#00000053', width: 0.1 }
+					: { color: '#00000053', width: 0.4 }
 			),
 		})
 	}
