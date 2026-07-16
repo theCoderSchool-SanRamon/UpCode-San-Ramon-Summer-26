@@ -19,8 +19,15 @@ function handleSelect(selection) {
 <template>
 
 <div id="layer_root_overlay">
-<Search id="search" :counties="mapRef?.countyList ?? []" @select="handleSelect" />
-<Leaderboard :counties="mapRef?.countyList ?? []" @select="handleSelect" />
+
+	<div id="toolbar_container">
+
+
+
+	</div>
+
+	<Search id="search" :counties="mapRef?.countyList ?? []" @select="handleSelect" />
+	<!-- <Leaderboard :counties="mapRef?.countyList ?? []" @select="handleSelect" />-->
 </div>
 <Map id='map' ref="mapRef" />
 
@@ -32,5 +39,7 @@ function handleSelect(selection) {
 		width: 100%;
 		position: fixed;
 }
-
+#search_button {
+	background: var(--overlay-background)
+}
 </style>

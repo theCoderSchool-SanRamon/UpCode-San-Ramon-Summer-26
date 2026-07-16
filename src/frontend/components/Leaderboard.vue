@@ -120,16 +120,16 @@ function selectRow(row) {
 <style scoped>
 #leaderboard {
 	position: fixed;
-	top: 8px;
-	right: 8px;
-	width: 320px;
-	max-height: calc(100% - 16px);
+	margin-left: 16px;
+	scrollbar-width: none;
+	flex: auto;
+	max-height: calc(95% - 32px);
 	z-index: 100;
 	padding: 16px;
 	background: var(--overlay-background);
-	backdrop-filter: blur(5px);
-	box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
-	border-radius: 8px;
+	backdrop-filter: var(--overlay-blur);
+	border: var(--overlay-border);
+	border-radius: 16px;
 	overflow-y: auto;
 	font: 13px Arial, sans-serif;
 	pointer-events: auto;
@@ -144,7 +144,7 @@ function selectRow(row) {
 	gap: 4px;
 	margin-bottom: 12px;
 	padding-bottom: 12px;
-	border-bottom: 1px solid #ccc;
+	border-bottom: var(--overlay-border)
 }
 .weight-row {
 	display: flex;
@@ -157,7 +157,7 @@ function selectRow(row) {
 .weight-row input {
 	width: 60px;
 	font: 12px Arial, sans-serif;
-	border: 1px solid #ccc;
+	border: var(--overlay-border);
 	border-radius: 4px;
 	padding: 2px 4px;
 	outline: none;
@@ -186,7 +186,7 @@ function selectRow(row) {
 	margin-top: 6px;
 	font: 12px Arial, sans-serif;
 	padding: 4px 8px;
-	border: 1px solid #ccc;
+	border: var(--overlay-border);
 	border-radius: 6px;
 	background: white;
 	cursor: pointer;
