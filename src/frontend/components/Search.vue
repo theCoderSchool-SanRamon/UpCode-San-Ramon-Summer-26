@@ -23,24 +23,27 @@ const filteredCounties = computed(() => {
 	for (const c of props.counties) {
 		const nameLower = c.name.toLowerCase()
 		const fullLower = nameLower + ', ' + c.state.toLowerCase()
+		const display = `${c.name} County, ${c.state}`
+
 		if (nameLower.startsWith(q)) {
-			startsWith.push(c)
+			startsWith.push({...c,display})
 		} else if (fullLower.includes(q)) {
-			includes.push(c)
+			includes.push({...c,display})
 		}
 	}
 	return [...startsWith, ...includes].slice(0, 12)
 })
 
+const isOnlyDigits = (str) => /^\d+$/.test(str);
+
 watch(searchQuery, (val) => {
-	if (searchMode.value === 'city') {
-		clearTimeout(suggestionDebounceTimer)
-		if (!val.trim()) { searchSuggestions.value = []; return }
-		suggestionDebounceTimer = setTimeout(() => fetchCities(val), 350)
-	} else if (searchMode.value === 'zip') {
-		clearTimeout(suggestionDebounceTimer)
-		if (!val.trim()) { searchSuggestions.value = []; return }
+	clearTimeout(suggestionDebounceTimer)
+	if (!val.trim()) { searchSuggestions.value = []; return }
+
+	if (isOnlyDigits(val)) {
 		suggestionDebounceTimer = setTimeout(() => fetchZIP(val), 350)
+	} else if (searchMode.value === 'city/zip') {
+		suggestionDebounceTimer = setTimeout(() => fetchCities(val), 350)
 	}
 })
 
@@ -48,6 +51,7 @@ watch (searchMode, () => {
 	onSearchSelect.value = false
 	searchInputEntry.value.focus()
 })
+
 
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -83,7 +87,7 @@ async function fetchCities(query) {
 				const addr = r.address || {}
 				const city = addr.city || addr.town || addr.village || addr.municipality || r.name
 				const state = addr.state || ''
-				return { place_id: r.place_id, display: state ? `${city}, ${state}` : city, lat: parseFloat(r.lat), lon: parseFloat(r.lon) }
+				return { restype: 'city', key: r.place_id, place_id: r.place_id, display: state ? `${city}, ${state}` : city, lat: parseFloat(r.lat), lon: parseFloat(r.lon) }
 			})
 	} catch (e) {
 		searchSuggestions.value = []
@@ -95,13 +99,23 @@ function selectCity(city) {
 	searchSuggestions.value = []
 }
 
+function selectResult(res) {
+	if (res.restype == 'city') {
+		selectCity(res)
+	} else if (res.restype == 'zip') {
+		selectZIP(res)
+	} else {
+		selectCounty(res)
+	}
+}
+
 async function fetchZIP(query) {
 	try {
 		const url = `https://api.zippopotam.us/us/${encodeURIComponent(query)}`
 		const res = await fetch(url, { headers: { 'Accept-Language': 'en' } })
 		const data = await res.json()
 		const place = data['places'][0]
-		searchSuggestions.value = [{ display: `${place['place name']}, ${place['state']}`, lat: parseFloat(place.latitude), lon: parseFloat(place.longitude) }]
+		searchSuggestions.value = [{ restype: 'zip', key: `${place['place name']}, ${place['state']}`, display: `${place['place name']}, ${place['state']}`, lat: parseFloat(place.latitude), lon: parseFloat(place.longitude) }]
 	} catch (e) {
 		searchSuggestions.value = []
 	}
@@ -147,41 +161,30 @@ async function onSearchButton() {
 			<li
 				v-for="county in filteredCounties"
 				:key="county.key"
-				@mousedown.prevent="selectCounty(county)"
+				@mousedown.prevent="selectResult(county)"
 			>
-				{{ county.name }}, {{ county.state }}
+				{{ county.display }}
 			</li>
 		</ul>
 		</Transition>
 		<Transition>
-		<ul class="suggestions" v-if="searchMode === 'city' && searchSuggestions.length > 0">
+		<ul class="suggestions" v-if="(searchMode === 'city/zip') && searchSuggestions.length > 0">
 			<li
-				v-for="city in searchSuggestions"
-				:key="city.place_id"
-				@mousedown.prevent="selectCity(city)"
+				v-for="opt in searchSuggestions"
+				:key="opt.key"
+				@mousedown.prevent="selectResult(opt)"
 			>
-				{{ city.display }}
-			</li>
-		</ul>
-		</Transition>
-		<Transition>
-		<ul class="suggestions" v-if="searchMode === 'zip' && searchSuggestions.length > 0">
-			<li
-				v-for="zip in searchSuggestions"
-				:key="zip.display"
-				@mousedown.prevent="selectZIP(zip)"
-			>
-				{{ zip.display }}
+				{{ opt.display }}
 			</li>
 		</ul>
 		</Transition>
 
-		<select id="mode-select" v-model="searchMode" ref="searchModeSelectEntry" @blur="onSearchSelect=false; handleBlur($event)">
-			<option value="county">Search by County</option>
-			<option value="city">Search by City</option>
-			<option value="zip">Search by ZIP code</option>
-		</select>
+
 	</div>
+	<select id="mode-select" v-model="searchMode" ref="searchModeSelectEntry" @blur="onSearchSelect=false; handleBlur($event)">
+			<option value="county">Search by County</option>
+			<option value="city/zip">Search by City or ZIP</option>
+		</select>
 </div>
 </template>
 
