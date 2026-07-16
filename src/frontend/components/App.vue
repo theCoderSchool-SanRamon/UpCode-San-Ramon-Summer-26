@@ -3,6 +3,8 @@ import { onMounted, ref } from 'vue'
 import Map from './map.vue'
 import Search from './search.vue'
 import Leaderboard from './Leaderboard.vue'
+import PropertyPanel from './PropertyPanel.vue'
+import CompareView from './CompareView.vue'
 
 const mapRef = ref(null)
 
@@ -19,8 +21,17 @@ function handleSelect(selection) {
 <template>
 
 <div id="layer_root_overlay">
-<Search id="search" :counties="mapRef?.countyList ?? []" @select="handleSelect" />
-<Leaderboard :counties="mapRef?.countyList ?? []" @select="handleSelect" />
+
+	<div id="toolbar_container">
+
+
+
+	</div>
+
+	<Search id="search" :counties="mapRef?.countyList ?? []" @select="handleSelect" />
+	<PropertyPanel />
+	<!-- <Leaderboard :counties="mapRef?.countyList ?? []" @select="handleSelect" /> -->
+	<CompareView />
 </div>
 <Map id='map' ref="mapRef" />
 
@@ -32,5 +43,7 @@ function handleSelect(selection) {
 		width: 100%;
 		position: fixed;
 }
-
+#search_button {
+	background: var(--overlay-background)
+}
 </style>

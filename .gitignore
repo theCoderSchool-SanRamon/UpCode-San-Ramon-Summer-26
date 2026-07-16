@@ -1,5 +1,10 @@
 # Project-specific Census key storage
 .census_key
+# RentCast API key
+.env
+# Backend property/listings lookup cache
+property_cache.json
+listings_cache.json
 # Python auto-generated folders
 __pycache__
 .venv

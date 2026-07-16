@@ -7,12 +7,16 @@ import View from 'ol/View.js'
 import VectorLayer from 'ol/layer/Vector.js';
 import VectorSource from 'ol/source/Vector.js';
 import GeoJSON from 'ol/format/GeoJSON.js';
+import Feature from 'ol/Feature.js';
+import Point from 'ol/geom/Point.js';
 import { defaults as defaultControls } from 'ol/control.js';
-import { Style, Fill, Stroke } from 'ol/style';
-import { fromLonLat } from 'ol/proj.js';
+import { Style, Fill, Stroke, Text } from 'ol/style';
+import { fromLonLat, toLonLat } from 'ol/proj.js';
 import { useCountyScores } from '../composables/countyScores.js'
+import { usePropertyAnalysis } from '../composables/propertyAnalysis.js'
 
 const { countyScores, keyFor, ensureLoaded: ensureScoresLoaded, populationFilter, POPULATION_THRESHOLDS } = useCountyScores()
+const { fetchProperty, addressQuery } = usePropertyAnalysis()
 
 const mapRoot = ref(null)
 let countyData = ref(null)
@@ -58,6 +62,72 @@ const countylayer = new VectorLayer({
 	opacity: 0.7,
 })
 
+const LISTINGS_MIN_ZOOM = 12
+const LISTINGS_BUCKET_STEP = 0.05
+
+const listingsSource = new VectorSource()
+const listingsLayer = new VectorLayer({
+	source: listingsSource,
+	style: styleListing,
+})
+listingsLayer.setVisible(false)
+
+const fetchedListingBuckets = new Set()
+const seenListingAddresses = new Set()
+
+function formatPriceShort(v) {
+	if (v == null) return '?'
+	if (v >= 1e6) return '$' + (v / 1e6).toFixed(2) + 'M'
+	if (v >= 1e3) return '$' + Math.round(v / 1e3) + 'K'
+	return '$' + v
+}
+
+function styleListing(feature) {
+	return new Style({
+		text: new Text({
+			text: formatPriceShort(feature.get('price')),
+			font: 'bold 12px Arial, sans-serif',
+			fill: new Fill({ color: '#ffffff' }),
+			backgroundFill: new Fill({ color: '#7a1f1f' }),
+			backgroundStroke: new Stroke({ color: '#4a1010', width: 1 }),
+			padding: [4, 8, 4, 8],
+		}),
+	})
+}
+
+function listingBucketKey(lat, lon, radius) {
+	const blat = Math.round(lat / LISTINGS_BUCKET_STEP) * LISTINGS_BUCKET_STEP
+	const blon = Math.round(lon / LISTINGS_BUCKET_STEP) * LISTINGS_BUCKET_STEP
+	return `${blat.toFixed(2)},${blon.toFixed(2)},${Math.round(radius)}`
+}
+
+async function fetchListings(lat, lon, radiusMiles) {
+	const key = listingBucketKey(lat, lon, radiusMiles)
+	if (fetchedListingBuckets.has(key)) return
+	fetchedListingBuckets.add(key)
+	try {
+		const res = await fetch(`/api/listings?lat=${lat}&lon=${lon}&radius=${radiusMiles}`)
+		if (!res.ok) return
+		const listings = await res.json()
+		const features = []
+		for (const l of listings) {
+			if (l.latitude == null || l.longitude == null || !l.price || !l.address) continue
+			if (seenListingAddresses.has(l.address)) continue
+			seenListingAddresses.add(l.address)
+			const feature = new Feature({ geometry: new Point(fromLonLat([l.longitude, l.latitude])) })
+			feature.set('address', l.address)
+			feature.set('price', l.price)
+			feature.set('beds', l.beds)
+			feature.set('baths', l.baths)
+			feature.set('sqft', l.sqft)
+			features.push(feature)
+		}
+		listingsSource.addFeatures(features)
+	} catch (e) {
+		// silently skip; listings are a best-effort overlay
+	}
+}
+
 function getCountyId(feature) {
 	return feature.get("STATEFP") + feature.get("COUNTYFP")
 }
@@ -78,9 +148,10 @@ function styleFeature(feature) {
 			fill: new Fill({ color: fillColor }),
 			stroke: new Stroke(
 				isHighlighted
-					? { color: '#F0CC00', width: 4 }
+					? { color: '#F0CC00', width: 8 }
 					: { color: '#00000053', width: 0.4 }
 			),
+			zIndex: isHighlighted ? 1 : 0
 		})
 	}
 
@@ -149,15 +220,47 @@ onMounted(async () => {
 	countyList.value = counties
 
 	mapInstance.addLayer(countylayer)
+	mapInstance.addLayer(listingsLayer)
 
 	mapInstance.on('pointermove', (evt) => {
 		mouseX.value = evt.originalEvent.clientX
 		mouseY.value = evt.originalEvent.clientY
+		const listingFeature = mapInstance.forEachFeatureAtPixel(evt.pixel, f => f, { layerFilter: l => l === listingsLayer })
+		mapInstance.getViewport().style.cursor = listingFeature ? 'pointer' : ''
+		if (listingFeature) {
+			hoveredFeature.value = null
+			isHovering.value = false
+			return
+		}
 		const feature = mapInstance.forEachFeatureAtPixel(evt.pixel, f => f, { layerFilter: l => l === countylayer })
 		hoveredFeature.value = feature ?? null
 		isHovering.value = !!feature
+		if (highlightedId.value != null && isHovering.value) { highlightedId.value = null }
 	})
 	mapInstance.getViewport().addEventListener('mouseout', () => { isHovering.value = false })
+
+	mapInstance.on('click', (evt) => {
+		const feature = mapInstance.forEachFeatureAtPixel(evt.pixel, f => f, { layerFilter: l => l === listingsLayer })
+		if (!feature) return
+		const address = feature.get('address')
+		if (!address) return
+		addressQuery.value = address
+		fetchProperty(address).catch(() => {})
+	})
+
+	mapInstance.on('moveend', () => {
+		const view = mapInstance.getView()
+		const zoom = view.getZoom()
+		const show = zoom != null && zoom >= LISTINGS_MIN_ZOOM
+		listingsLayer.setVisible(show)
+		if (!show) return
+
+		const center = toLonLat(view.getCenter())
+		const extent = view.calculateExtent(mapInstance.getSize())
+		const widthMeters = extent[2] - extent[0]
+		const radiusMiles = Math.min(10, Math.max(1, (widthMeters / 2) / 1609.34))
+		fetchListings(center[1], center[0], radiusMiles)
+	})
 })
 
 watch(populationFilter, () => countylayer.changed())

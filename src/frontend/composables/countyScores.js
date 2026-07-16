@@ -14,7 +14,6 @@ const WEIGHT_SUM_TOLERANCE = 0.01
 
 export const POPULATION_THRESHOLDS = { all: 0, '50k': 50000, '100k': 100000, '250k': 250000, '500k': 500000 }
 
-// Module-level singleton state, shared by every component that calls useCountyScores().
 const rawCountyData = ref(null)
 const loading = ref(false)
 const loaded = ref(false)
@@ -29,7 +28,6 @@ function percentile(sortedVals, p) {
 	return sortedVals[f] * (c - k) + sortedVals[c] * (k - f)
 }
 
-// Per-factor {p5, p95, min, max} across all counties, mirrors scorecalc.py's clamp range.
 const ranges = computed(() => {
 	if (!rawCountyData.value) return null
 	const out = {}
@@ -46,8 +44,6 @@ const ranges = computed(() => {
 	return out
 })
 
-// Per-county, per-factor [0,1] normalized values. Independent of weights, so it's only
-// recomputed when the underlying data changes, not on every weight edit.
 const normCache = computed(() => {
 	if (!rawCountyData.value || !ranges.value) return null
 	const cache = {}
@@ -91,8 +87,6 @@ function computeScore(norms) {
 	}
 }
 
-// Recompute all county scores only while weights are valid, so an in-progress invalid
-// edit freezes the leaderboard at the last good result instead of showing NaN/blank rows.
 watch([normCache, weights], () => {
 	if (!normCache.value || !weightsValid.value) return
 	const out = {}
