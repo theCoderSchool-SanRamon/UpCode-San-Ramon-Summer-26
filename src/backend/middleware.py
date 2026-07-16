@@ -4,6 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 import sqlite3
 
 import api_query as api_query
+import property_query as property_query
+import listings_query as listings_query
 
 app = FastAPI()
 
@@ -30,6 +32,16 @@ def query_census(
 		)
 	else:
 		raise HTTPException(status_code=422, detail="place or county must be provided.")
+
+
+@app.get("/property")
+def query_property(address: str = Query(...)):
+	return property_query.get_property(address)
+
+
+@app.get("/listings")
+def query_listings(lat: float = Query(...), lon: float = Query(...), radius: float = Query(3.0)):
+	return listings_query.get_listings(lat, lon, radius)
 
 
 if __name__ == "__main__":

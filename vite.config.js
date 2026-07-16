@@ -18,7 +18,7 @@ export default defineConfig({
   server: {
     host: true,
     port: 3000,       // Change the default port if needed
-    open: true,       // Automatically open the app in your browser on start
+    open: false,       // Automatically open the app in your browser on start
     proxy: {
       '/api': {
         target: 'http://localhost:8080', // Proxy API calls to your backend
