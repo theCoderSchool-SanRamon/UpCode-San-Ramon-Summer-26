@@ -20,6 +20,7 @@ const { fetchProperty, addressQuery } = usePropertyAnalysis()
 
 const mapRoot = ref(null)
 let countyData = ref(null)
+let placeData = ref(null)
 
 let mapInstance = null
 let OSMLayer = null
@@ -58,7 +59,13 @@ const hoverInfo = computed(() => {
 const countySource = new VectorSource()
 const countylayer = new VectorLayer({
 	source: countySource,
-	style: styleFeature,
+	style: styleCountyFeature,
+	opacity: 0.7,
+})
+const placeSource = new VectorSource()
+const placelayer = new VectorLayer({
+	source: placeSource,
+	style: stylePlaceFeature,
 	opacity: 0.7,
 })
 
@@ -132,28 +139,49 @@ function getCountyId(feature) {
 	return feature.get("STATEFP") + feature.get("COUNTYFP")
 }
 
+function getPlaceId(feature) {
+	return feature.get("STATEFP") + feature.get("PLACEFP")
+}
+
 function countyMeetsThreshold(id, threshold) {
 	if (threshold <= 0) return true
 	const pop = countyData?.[id]?.[2]
 	return pop != null && Number(pop) >= threshold
 }
 
-function styleFeature(feature) {
-		const id = getCountyId(feature)
-		const fillColor = countyMeetsThreshold(id, POPULATION_THRESHOLDS[populationFilter.value])
-			? getColor((Number(countyData[id][0]) / Number(countyData[id][1]))/12,60,false)
-			: '#B5B5B5'
-		const isHighlighted = id === highlightedId.value
-		return new Style({
-			fill: new Fill({ color: fillColor }),
-			stroke: new Stroke(
-				isHighlighted
-					? { color: '#F0CC00', width: 8 }
-					: { color: '#00000053', width: 0.4 }
-			),
-			zIndex: isHighlighted ? 1 : 0
-		})
-	}
+function styleCountyFeature(feature) {
+	const id = getCountyId(feature)
+	const fillColor = countyMeetsThreshold(id, POPULATION_THRESHOLDS[populationFilter.value])
+		? getColor((Number(countyData[id][0]) / Number(countyData[id][1])) / 12, 60, false)
+		: '#B5B5B5'
+	const isHighlighted = id === highlightedId.value
+	return new Style({
+		fill: new Fill({ color: fillColor }),
+		stroke: new Stroke(
+			isHighlighted
+				? { color: '#F0CC00', width: 8 }
+				: { color: '#00000053', width: 0.4 }
+		),
+		zIndex: isHighlighted ? 1 : 0
+	})
+}
+
+function stylePlaceFeature(feature) {
+	const id = getPlaceId(feature)
+	const fillColor = true // countyMeetsThreshold(id, POPULATION_THRESHOLDS[populationFilter.value])
+		? getColor((Number(placeData[id][0]) / Number(placeData[id][1])) / 12, 60, false)
+		: '#B5B5B5'
+	const isHighlighted = id === highlightedId.value
+	return new Style({
+		fill: new Fill({ color: fillColor }),
+		stroke: new Stroke(
+			isHighlighted
+				? { color: '#F0CC00', width: 8 }
+				: { color: '#00000053', width: 0.4 }
+		),
+		zIndex: isHighlighted ? 1 : 0
+	})
+}
 
 function getColor(d, m, i) {
 	return d <= 1 ? '#CFCFCF' : getColorMix(
@@ -195,20 +223,32 @@ onMounted(async () => {
 	});
 
 	var countyGeometry = fetch("/counties.geojson", {headers: {'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=2628000, immutable'}});
-	var priceandrentf = fetch("/api/census?query=B25077_001E,B25058_001E,B01003_001E&county=*")
+	var placeGeometry = fetch("/places.geojson", {headers: {'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=2628000, immutable'}})
+	var priceandrentcounty = fetch("/api/census?query=B25077_001E,B25058_001E,B01003_001E&county=*")
+	var priceandrentplace = fetch("/api/census?query=B25077_001E,B25058_001E,B01003_001E&place=*")
 
 	countyGeometry = await countyGeometry
-	priceandrentf = await priceandrentf
+	placeGeometry = await placeGeometry
+	priceandrentcounty = await priceandrentcounty
+	priceandrentplace = await priceandrentplace
 
 	countyGeometry = await countyGeometry.json()
-	countyData = await priceandrentf.json()
+	placeGeometry = await placeGeometry.json()
+	countyData = await priceandrentcounty.json()
+	placeData = await priceandrentplace.json()
 
-	const features = new GeoJSON().readFeatures(
+	var features = new GeoJSON().readFeatures(
 			countyGeometry,
 			{featureProjection: 'EPSG:3857', }
 		)
 
 	countySource.addFeatures(features)
+
+	features = new GeoJSON().readFeatures(
+			placeGeometry,
+			{featureProjection: 'EPSG:3857', }
+		)
+	placeSource.addFeatures(features)
 
 	countyFeaturesById = {}
 	const counties = []
@@ -221,6 +261,7 @@ onMounted(async () => {
 	countyList.value = counties
 
 	mapInstance.addLayer(countylayer)
+	mapInstance.addLayer(placelayer)
 	mapInstance.addLayer(listingsLayer)
 
 	mapInstance.on('pointermove', (evt) => {
