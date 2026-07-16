@@ -190,7 +190,8 @@ onMounted(async () => {
 	 ],
 		view: new View({
 			center: [-11281117, 4579425],
-			zoom: 5, }),
+			zoom: 5, 
+			maxZoom: 20, }),
 	});
 
 	var countyGeometry = fetch("/counties.geojson", {headers: {'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=2628000, immutable'}});
