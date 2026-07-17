@@ -169,20 +169,30 @@ function styleCountyFeature(feature) {
 }
 
 function stylePlaceFeature(feature) {
-	const id = getPlaceId(feature)
-	const fillColor = true // countyMeetsThreshold(id, POPULATION_THRESHOLDS[populationFilter.value])
-		? getColor((Number(placeData[id][0]) / Number(placeData[id][1])) / 12, 60, false)
-		: '#B5B5B5'
-	const isHighlighted = id === highlightedId.value
-	return new Style({
-		fill: new Fill({ color: fillColor }),
-		stroke: new Stroke(
-			isHighlighted
-				? { color: '#F0CC00', width: 8 }
-				: { color: '#00000053', width: 0.4 }
-		),
-		zIndex: isHighlighted ? 1 : 0
-	})
+	try {
+		const id = getPlaceId(feature)
+		const fillColor = true // countyMeetsThreshold(id, POPULATION_THRESHOLDS[populationFilter.value])
+			? getColor((Number(placeData[id][0]) / Number(placeData[id][1])) / 12, 60, false)
+			: '#B5B5B5'
+		const isHighlighted = id === highlightedId.value
+		return new Style({
+			fill: new Fill({ color: fillColor }),
+			stroke: new Stroke(
+				isHighlighted
+					? { color: '#F0CC00', width: 8 }
+					: { color: '#00000053', width: 0.4 }
+			),
+			zIndex: isHighlighted ? 1 : 0
+		})
+	} catch(e) {
+		return new Style({
+			fill: new Fill({ color: '#B5B5B5' }),
+			stroke: new Stroke(
+				{ color: '#00000053', width: 0.4 }
+			),
+			zIndex: 0
+		})
+	}
 }
 
 function getColor(d, m, i) {

@@ -6,6 +6,7 @@ import Leaderboard from './Leaderboard.vue'
 import PropertyPanel from './PropertyPanel.vue'
 import CompareView from './CompareView.vue'
 import LayerControl from './LayerControl.vue'
+import Filter from './Filter.vue'
 
 const mapRef = ref(null)
 
@@ -37,8 +38,7 @@ function handleLayerControlChanged(change) {
 	<div id="toolbar_container">
 
 		<Search id="search" :counties="mapRef?.countyList ?? []" @select="handleSelect" />
-		<LayerControl id="layer-control" @changed="handleLayerControlChanged"/>
-
+		<Filter />
 
 	</div>
 
@@ -52,6 +52,15 @@ function handleLayerControlChanged(change) {
 </template>
 
 <style scoped>
+
+#toolbar_container {
+
+	flex-direction: row;
+	flex: content;
+	display: flex;
+	flex-wrap: nowrap;
+}
+
 #map {
 		height: 100%;
 		width: 100%;
