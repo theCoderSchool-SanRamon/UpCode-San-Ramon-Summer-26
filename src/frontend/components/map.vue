@@ -28,6 +28,7 @@ let OSMLayer = null
 const countyList = ref([])
 let countyFeaturesById = {}
 const highlightedId = ref(null)
+let activeLayer = "county"
 
 const isHovering = ref(false)
 const mouseX = ref(0)
@@ -275,7 +276,7 @@ onMounted(async () => {
 			isHovering.value = false
 			return
 		}
-		const feature = mapInstance.forEachFeatureAtPixel(evt.pixel, f => f, { layerFilter: l => l === countylayer })
+		const feature = mapInstance.forEachFeatureAtPixel(evt.pixel, f => f, { layerFilter: l => l === ((activeLayer === "county") ? countylayer : placelayer)})
 		hoveredFeature.value = feature ?? null
 		isHovering.value = !!feature
 		if (highlightedId.value != null && isHovering.value) { highlightedId.value = null }
@@ -323,12 +324,28 @@ function goToCoordinate(lon, lat, zoom = 11) {
 	mapInstance.getView().animate({ center: fromLonLat([lon, lat]), zoom, duration: 400 })
 }
 
+function setVisible(layer, status) {
+	console.log(layer, status)
+	if (layer === "county") {
+		countylayer.setVisible(status)
+	}
+	if (layer === "city") {
+		placelayer.setVisible(status)
+	}
+}
+
+function setInteractable(layer) {
+	activeLayer = layer
+}
+
 defineExpose({
 	mapInstance,
 	OSMLayer,
 	countyList,
 	goToCounty,
 	goToCoordinate,
+	setVisible,
+	setInteractable,
 })
 
 </script>

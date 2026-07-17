@@ -5,6 +5,7 @@ import Search from './search.vue'
 import Leaderboard from './Leaderboard.vue'
 import PropertyPanel from './PropertyPanel.vue'
 import CompareView from './CompareView.vue'
+import LayerControl from './LayerControl.vue'
 
 const mapRef = ref(null)
 
@@ -16,6 +17,17 @@ function handleSelect(selection) {
 		mapRef.value.goToCoordinate(selection.lon, selection.lat)
 	}
 }
+
+function handleLayerControlChanged(change) {
+	console.log(change)
+	if (!mapRef.value) return
+	if (change.type === "visibility") {
+		mapRef.value.setVisible(change.layer, change.value)
+	}
+	if (change.type === "interactability" && change.value) {
+		mapRef.value.setInteractable(change.layer)
+	}
+}
 </script>
 
 <template>
@@ -25,6 +37,7 @@ function handleSelect(selection) {
 	<div id="toolbar_container">
 
 		<Search id="search" :counties="mapRef?.countyList ?? []" @select="handleSelect" />
+		<LayerControl id="layer-control" @changed="handleLayerControlChanged"/>
 
 
 	</div>
