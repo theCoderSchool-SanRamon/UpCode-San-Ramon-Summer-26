@@ -19,8 +19,10 @@ const uiEnabled = ref(false);
 </button>
 
 <Transition name="slot">
-<div style="overflow: hidden;"">
-	<slot v-if="uiEnabled"></slot>
+<div v-if="uiEnabled" class="wrap">
+	<Transition name="slot">
+	<slot  v-if="uiEnabled"></slot>
+	</Transition>
 </div>
 </Transition>
 
@@ -30,18 +32,22 @@ const uiEnabled = ref(false);
 
 <style scoped>
 
+.wrap {
+	overflow: hidden;
+	max-width: 1000px;
+}
 .slot-enter-active {
 	transition: 
 	opacity 0.4s ease,
-	max-width 0.5s ease,
+	max-width 1.9s ease,
 	transform 0.5s cubic-bezier(0.16, 1, 0.5, 1)
 	;
 }
 .slot-leave-active {
 	transition: 
-	opacity 0.1s ease,
-	max-width 0.5s ease,
-	transform 0.5s cubic-bezier(0.16, 1, 0.5, 1)
+	opacity 0.4s ease,
+	max-width 1s ease,
+	transform 2s cubic-bezier(0.16, 1, 0.5, 1)
 	;
 }
 .slot-enter-from, .slot-leave-to {
