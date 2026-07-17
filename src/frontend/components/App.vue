@@ -33,6 +33,7 @@ function handleSelect(selection) {
 	<!-- <Leaderboard :counties="mapRef?.countyList ?? []" @select="handleSelect" /> -->
 	<CompareView />
 </div>
+
 <Map id='map' ref="mapRef" />
 
 </template>

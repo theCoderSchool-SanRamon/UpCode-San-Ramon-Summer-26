@@ -33,6 +33,7 @@ const isHovering = ref(false)
 const mouseX = ref(0)
 const mouseY = ref(0)
 const hoveredFeature = ref(null)
+const loading = ref(true)
 
 const hoverInfo = computed(() => {
 	const f = hoveredFeature.value
@@ -303,6 +304,8 @@ onMounted(async () => {
 		const radiusMiles = Math.min(10, Math.max(1, (widthMeters / 2) / 1609.34))
 		fetchListings(center[1], center[0], radiusMiles)
 	})
+
+	loading.value = false
 })
 
 watch(populationFilter, () => countylayer.changed())
@@ -331,7 +334,11 @@ defineExpose({
 </script>
 
 <template>
+	
 	<div class="map" ref="mapRoot">
+		<div id="loading" v-show="loading">
+			<img src="/loading-9.gif" style="width: 10%; aspect-ratio: 1; object-fit: cover; "></img>
+		</div>
 		<div class="hover-box" v-if="isHovering && hoverInfo" :style="{ left: mouseX + 12 + 'px', top: mouseY + 20 + 'px' }">
 			<h3>{{ hoverInfo.name }}, {{ hoverInfo.state }}</h3>
 			<template v-if="hoverInfo.filtered"><i>Filtered: population below threshold</i><br></template>
@@ -353,6 +360,7 @@ defineExpose({
 			</select>
 		</div>
 	</div>
+	
 </template>
 
 <style scoped>
@@ -399,5 +407,18 @@ defineExpose({
 }
 .population-filter select:focus {
 	border-color: #666;
+}
+#loading {
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 100;
+	width: 100%;
+	height: 100%;
+	background: white;
+	align-content: center;
+	justify-content: center;
+	align-items: center;
+	display: flex;
 }
 </style>
