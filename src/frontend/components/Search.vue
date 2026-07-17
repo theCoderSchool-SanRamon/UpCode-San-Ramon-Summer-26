@@ -10,63 +10,68 @@ const searchMode = ref('county')
 const searchActive = ref(false)
 const searchQuery = ref('')
 const searchInputEntry = ref(null)
-const onSearchSelect = ref(false)
-const searchModeSelectEntry = ref(null)
 const searchSuggestions = ref([])
 let suggestionDebounceTimer = null
 
-const filteredCounties = computed(() => {
-	const q = searchQuery.value.toLowerCase()
-	if (!q) return []
-	const startsWith = []
-	const includes = []
-	for (const c of props.counties) {
-		const nameLower = c.name.toLowerCase()
-		const fullLower = nameLower + ', ' + c.state.toLowerCase()
-		if (nameLower.startsWith(q)) {
-			startsWith.push(c)
-		} else if (fullLower.includes(q)) {
-			includes.push(c)
-		}
-	}
-	return [...startsWith, ...includes].slice(0, 12)
-})
+const isOnlyDigits = (str) => /^\d+$/.test(str);
 
 watch(searchQuery, (val) => {
-	if (searchMode.value === 'city') {
-		clearTimeout(suggestionDebounceTimer)
-		if (!val.trim()) { searchSuggestions.value = []; return }
-		suggestionDebounceTimer = setTimeout(() => fetchCities(val), 350)
-	} else if (searchMode.value === 'zip') {
-		clearTimeout(suggestionDebounceTimer)
-		if (!val.trim()) { searchSuggestions.value = []; return }
+	clearTimeout(suggestionDebounceTimer)
+	if (!val.trim()) { searchSuggestions.value = []; return }
+	if (isOnlyDigits(val)) {
 		suggestionDebounceTimer = setTimeout(() => fetchZIP(val), 350)
-	}
+	} else { suggestionDebounceTimer = setTimeout(() => fetchSearch(val), 350) }
+	/*
+	if (isOnlyDigits(val)) {
+		suggestionDebounceTimer = setTimeout(() => fetchZIP(val), 350)
+	} else if (searchMode.value === 'city/zip') {
+		suggestionDebounceTimer = setTimeout(() => fetchCities(val), 350)
+	}*/
+	
 })
 
 watch (searchMode, () => {
-	onSearchSelect.value = false
 	searchInputEntry.value.focus()
 })
+
 
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 async function handleBlur(event) {
 	searchQuery.value = ''
 	searchSuggestions.value = []
-	if (event.relatedTarget !== searchModeSelectEntry.value){
-		await wait(200)
-		searchActive.value = false
-	} else {
-		onSearchSelect.value = true
-	}
+	await wait(200)
+	searchActive.value = false
 }
 
 function selectCounty(county) {
 	emit('select', { type: 'county', key: county.key })
 	searchQuery.value = ''
 }
+async function fetchSearch(query) {
 
+	try {
+		const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=12&countrycode=US&dedupe=1`
+		const res = await fetch(url, { headers: { 'Accept-Language': 'en' } })
+		const data = await res.json()
+		console.log(data.features)
+		const cityTypes = ['city', 'town', 'village', 'hamlet', 'municipality', 'borough']
+		searchSuggestions.value = data.features
+			.filter(r => {
+				return !(["house","street","district"].includes(r.properties.type))
+			})
+			.map(r => {
+				const display = []
+				if (r.properties.name) {display.push(r.properties.name + (r.properties.osm_value==="county"&&!r.properties.name.toLowerCase().includes("county") ? " County" : ""))}
+				if (r.properties.city && r.properties.city != r.properties.name) {display.push(r.properties.city)}
+				if (r.properties.state) {display.push(r.properties.state)}
+				return { restype: 'city', key: r.properties.osm_id, place_id: r.properties.osm_id, display: display.join(", "), lat: parseFloat(r.geometry.coordinates[1]), lon: parseFloat(r.geometry.coordinates[0]) }
+			})
+	} catch (e) {
+		console.log(e)
+		searchSuggestions.value = []
+	}
+}
 async function fetchCities(query) {
 	try {
 		const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=8&countrycodes=us&addressdetails=1`
@@ -83,7 +88,7 @@ async function fetchCities(query) {
 				const addr = r.address || {}
 				const city = addr.city || addr.town || addr.village || addr.municipality || r.name
 				const state = addr.state || ''
-				return { place_id: r.place_id, display: state ? `${city}, ${state}` : city, lat: parseFloat(r.lat), lon: parseFloat(r.lon) }
+				return { restype: 'city', key: r.place_id, place_id: r.place_id, display: state ? `${city}, ${state}` : city, lat: parseFloat(r.lat), lon: parseFloat(r.lon) }
 			})
 	} catch (e) {
 		searchSuggestions.value = []
@@ -95,13 +100,23 @@ function selectCity(city) {
 	searchSuggestions.value = []
 }
 
+function selectResult(res) {
+	if (res.restype == 'city') {
+		selectCity(res)
+	} else if (res.restype == 'zip') {
+		selectZIP(res)
+	} else {
+		selectCounty(res)
+	}
+}
+
 async function fetchZIP(query) {
 	try {
 		const url = `https://api.zippopotam.us/us/${encodeURIComponent(query)}`
 		const res = await fetch(url, { headers: { 'Accept-Language': 'en' } })
 		const data = await res.json()
 		const place = data['places'][0]
-		searchSuggestions.value = [{ display: `${place['place name']}, ${place['state']}`, lat: parseFloat(place.latitude), lon: parseFloat(place.longitude) }]
+		searchSuggestions.value = [{ restype: 'zip', key: `${place['place name']}, ${place['state']}`, display: `${place['place name']}, ${place['state']}`, lat: parseFloat(place.latitude), lon: parseFloat(place.longitude) }]
 	} catch (e) {
 		searchSuggestions.value = []
 	}
@@ -131,56 +146,28 @@ async function onSearchButton() {
 		<Transition name="search">
 		<input
 			id="search-input"
-			:class = "{ 'fakefocus': onSearchSelect }"
 			ref="searchInputEntry"
 			type="text"
 			placeholder="Search for a place..."
 			v-model="searchQuery"
 			v-if="searchActive"
 			@blur="handleBlur"
-			@focus="onSearchSelect=false"
 			autocomplete="off"
 		/>
 		</Transition>
 		<Transition>
-		<ul class="suggestions" v-if="searchMode === 'county' && searchQuery.length > 0 && filteredCounties.length > 0">
+		<ul class="suggestions" v-if="searchSuggestions.length > 0">
 			<li
-				v-for="county in filteredCounties"
-				:key="county.key"
-				@mousedown.prevent="selectCounty(county)"
+				v-for="opt in searchSuggestions"
+				:key="opt.key"
+				@mousedown.prevent="selectResult(opt)"
 			>
-				{{ county.name }}, {{ county.state }}
-			</li>
-		</ul>
-		</Transition>
-		<Transition>
-		<ul class="suggestions" v-if="searchMode === 'city' && searchSuggestions.length > 0">
-			<li
-				v-for="city in searchSuggestions"
-				:key="city.place_id"
-				@mousedown.prevent="selectCity(city)"
-			>
-				{{ city.display }}
-			</li>
-		</ul>
-		</Transition>
-		<Transition>
-		<ul class="suggestions" v-if="searchMode === 'zip' && searchSuggestions.length > 0">
-			<li
-				v-for="zip in searchSuggestions"
-				:key="zip.display"
-				@mousedown.prevent="selectZIP(zip)"
-			>
-				{{ zip.display }}
+				{{ opt.display }}
 			</li>
 		</ul>
 		</Transition>
 
-		<select id="mode-select" v-model="searchMode" ref="searchModeSelectEntry" @blur="onSearchSelect=false; handleBlur($event)">
-			<option value="county">Search by County</option>
-			<option value="city">Search by City</option>
-			<option value="zip">Search by ZIP code</option>
-		</select>
+
 	</div>
 </div>
 </template>

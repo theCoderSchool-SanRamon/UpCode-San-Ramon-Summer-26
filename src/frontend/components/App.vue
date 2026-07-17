@@ -24,11 +24,11 @@ function handleSelect(selection) {
 
 	<div id="toolbar_container">
 
+		<Search id="search" :counties="mapRef?.countyList ?? []" @select="handleSelect" />
 
 
 	</div>
 
-	<Search id="search" :counties="mapRef?.countyList ?? []" @select="handleSelect" />
 	<PropertyPanel />
 	<!-- <Leaderboard :counties="mapRef?.countyList ?? []" @select="handleSelect" /> -->
 	<CompareView />

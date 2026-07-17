@@ -1,5 +1,6 @@
 # Project-specific Census key storage
 .census_key
+.rentcast_key
 # RentCast API key
 .env
 # Backend property/listings lookup cache
