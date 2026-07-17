@@ -17,7 +17,7 @@ watch(cityActive, () => {emit("changed", {type: "interactability", layer: "city"
 
 </script>
 <template>
-	<ToolDropdown>
+	<ToolDropdown :icon-closed="'/openlayers.svg'" :icon-open="'/openlayers2.svg'">
 		<div id="layer-control-wrapper">
 			<tr>
 				<td>
