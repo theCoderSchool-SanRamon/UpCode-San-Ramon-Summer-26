@@ -69,6 +69,7 @@ const placelayer = new VectorLayer({
 	source: placeSource,
 	style: stylePlaceFeature,
 	opacity: 0.7,
+	minZoom: 7,
 })
 
 const LISTINGS_MIN_ZOOM = 12

@@ -1,6 +1,11 @@
 <script setup>
 import { computed, ref, watch, nextTick } from 'vue'
 
+const props = defineProps({
+	iconClosed: {type: String, default: ""},
+	iconOpen: {type: String, default: ""},
+})
+
 const uiEnabled = ref(false);
 
 </script>
