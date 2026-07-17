@@ -17,7 +17,9 @@ const uiEnabled = ref(false);
 <button id="toggle-button" @mousedown.prevent="uiEnabled = !uiEnabled">
 </button>
 
+<Transition name="slot">
 <slot v-if="uiEnabled"></slot>
+</Transition>
 
 </div>
 
@@ -25,11 +27,24 @@ const uiEnabled = ref(false);
 
 <style scoped>
 
-.v-enter-active, .v-leave-active {
-	transition: opacity 0.5s ease;
+.slot-enter-active {
+	transition: 
+	opacity 0.4s ease,
+	width 0s ease,
+	transform 0.5s cubic-bezier(0.16, 1, 0.5, 1)
+	;
 }
-.v-enter-from, .v-leave-to {
+.slot-leave-active {
+	transition: 
+	opacity 0.1s ease,
+	width 0s ease,
+	transform 0.5s cubic-bezier(0.16, 1, 0.5, 1)
+	;
+}
+.slot-enter-from, .slot-leave-to {
+	transform: scale(0.9) translateY(-200%);
 	opacity: 0;
+	width: 0px;
 }
 
 .img-icon {

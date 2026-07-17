@@ -237,7 +237,7 @@ async function onSearchButton() {
 	transition: width 0.2s ease-in-out;
 }
 #search-input:focus, #search-input.fakefocus {
-	width: 25%;
+	width: 10vw;
 }
 #mode-select {
 	margin-left: 16px;

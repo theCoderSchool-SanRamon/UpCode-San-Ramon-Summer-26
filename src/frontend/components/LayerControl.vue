@@ -1,5 +1,6 @@
 <script setup>
 import { ref, nextTick, watch } from 'vue';
+import ToolDropdown from './ToolDropdown.vue'
 
 const layerControlActive = ref(false)
 const countyVisible = ref(true)
@@ -14,20 +15,10 @@ watch(cityVisible, () => {emit("changed", {type: "visibility", layer: "city", va
 watch(countyActive, () => {emit("changed", {type: "interactability", layer: "county", value: countyActive.value})})
 watch(cityActive, () => {emit("changed", {type: "interactability", layer: "city", value: cityActive.value})})
 
-async function onLayerControlButton() {
-	layerControlActive.value=!layerControlActive.value
-	/*if (layerControlActive.value) {
-		await nextTick()
-		searchInputEntry.value.focus()
-	}*/
-}
 </script>
 <template>
-	<div id="layer-control-container">
-		<button id="layer-control-button" v-if="!layerControlActive" @click="onLayerControlButton()">
-			🗃️
-		</button>
-		<div id="layer-control-wrapper" v-if="layerControlActive">
+	<ToolDropdown>
+		<div id="layer-control-wrapper">
 			<tr>
 				<td>
 					<input type="checkbox" v-model="countyVisible" checked>
@@ -55,14 +46,14 @@ async function onLayerControlButton() {
 				</td>
 			</tr>
 		</div>
-	</div>
+	</ToolDropdown>
+
 </template>
 <style scoped>
 #layer-control-button {
 	pointer-events: auto;
 }
 #layer-control-wrapper {
-	width: 256px;
 	margin: 16px;
 	background: var(--overlay-background);
 	backdrop-filter: var(--overlay-blur);

@@ -5,8 +5,8 @@ import ToolDropdown from './ToolDropdown.vue'
 
 <template>
 <ToolDropdown>
-<div class="filter-body">
-</div>
+	<div class="filter-body">
+	</div>
 </ToolDropdown>
 </template>
 

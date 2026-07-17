@@ -38,13 +38,13 @@ function handleLayerControlChanged(change) {
 	<div id="toolbar_container">
 
 		<Search id="search" :counties="mapRef?.countyList ?? []" @select="handleSelect" />
-		<!--<LayerControl id="layer-control" @changed="handleLayerControlChanged"/>-->
+		<LayerControl id="layer-control" @changed="handleLayerControlChanged"/>
 
 		<Filter />
 
 	</div>
 
-	<PropertyPanel />
+	<!--<PropertyPanel />-->
 	<!-- <Leaderboard :counties="mapRef?.countyList ?? []" @select="handleSelect" /> -->
 	<CompareView />
 </div>
@@ -56,7 +56,7 @@ function handleLayerControlChanged(change) {
 <style scoped>
 
 #toolbar_container {
-
+	position: fixed;
 	flex-direction: row;
 	flex: content;
 	display: flex;
