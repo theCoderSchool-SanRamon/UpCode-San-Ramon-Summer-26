@@ -18,6 +18,7 @@ const FACTOR_LABELS = {
 	rentGrowth: 'Rent Growth',
 	tax: 'Property Tax',
 	vac: 'Vacancy',
+	pop: 'Population',
 }
 const factorKeys = Object.keys(FACTORS)
 
@@ -50,6 +51,7 @@ const rows = computed(() => {
 			partialData: info.partialData,
 			ratio: raw.ratio,
 			rentGrowth: raw.rentGrowth,
+			pop: raw.population,
 		})
 	}
 	list.sort((a, b) => {
@@ -101,6 +103,7 @@ function selectRow(row) {
 				<th @click="setSort('score')" :class="{ active: sortKey === 'score' }">Score</th>
 				<th @click="setSort('ratio')" :class="{ active: sortKey === 'ratio' }">Ratio</th>
 				<th @click="setSort('rentGrowth')" :class="{ active: sortKey === 'rentGrowth' }">Rent&nbsp;Growth</th>
+				<th @click="setSort('pop')" :class="{ active: sortKey === 'pop' }">Population</th>>
 			</tr>
 		</thead>
 		<tbody>
@@ -111,6 +114,7 @@ function selectRow(row) {
 				<td>{{ row.score.toFixed(1) }}</td>
 				<td>{{ row.ratio == null ? 'N/A' : row.ratio.toFixed(2) }}</td>
 				<td>{{ row.rentGrowth == null ? 'N/A' : (row.rentGrowth * 100).toFixed(1) + '%' }}</td>
+				<td>{{ row.pop == null ? 'N/A' : row.pop.toLocaleString() }}</td>
 			</tr>
 		</tbody>
 	</table>

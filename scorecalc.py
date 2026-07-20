@@ -3,11 +3,12 @@ import sqlite3, json, math
 DATA_PATH = "public/countydata.json"
 
 FACTORS = {
-	"ratio": {"weight": 0.30, "invert": True},
-	"apprec": {"weight": 0.25, "invert": False},
+	"ratio": {"weight": 0.20, "invert": True},
+	"apprec": {"weight": 0.20, "invert": False},
 	"rentGrowth": {"weight": 0.15, "invert": False},
 	"tax": {"weight": 0.15, "invert": True},
 	"vac": {"weight": 0.15, "invert": True},
+	"pop": {"weight": 0.15, "target": 100000, "tolerance": 500000, "invert": False},
 }
 
 
@@ -79,8 +80,12 @@ for (
 		and vacDenom > 0
 		else None
 	)
+	pop = (
+		population
+	)
 	
 	counties[key] = {
+		"pop": population,
 		"population": population,
 		"ratio": ratio,
 		"apprec": apprec,
@@ -105,19 +110,27 @@ for key, factors in counties.items():
 		raw = factors[name]
 		if raw is None or name not in ranges:
 			continue
-		r = ranges[name]
-		v = min(max(raw, r["p5"]), r["p95"])
-		if r["max"] == r["min"]:
-			norm = 1.0
+		if name == "pop":
+			target = cfg["target"]
+			tolerance = cfg["tolerance"]
+
+			distance = abs(raw - target)
+
+			norm = max(0.0, 1.0 - (distance / tolerance))
 		else:
-			norm = (
-				(r["max"] - v) / (r["max"] - r["min"])
-				if cfg["invert"]
-				else (v - r["min"]) / (r["max"] - r["min"])
-			)
-		norm = min(max(norm, 0.0), 1.0)
-		weighted_sum += cfg["weight"] * norm
-		weight_present += cfg["weight"]
+			r = ranges[name]
+			v = min(max(raw, r["p5"]), r["p95"])
+			if r["max"] == r["min"]:
+				norm = 1.0
+			else:
+				norm = (
+					(r["max"] - v) / (r["max"] - r["min"])
+					if cfg["invert"]
+					else (v - r["min"]) / (r["max"] - r["min"])
+				)
+			norm = min(max(norm, 0.0), 1.0)
+			weighted_sum += cfg["weight"] * norm
+			weight_present += cfg["weight"]
 
 	if weight_present > 0:
 		factors["score"] = round(100 * weighted_sum / weight_present, 1)
