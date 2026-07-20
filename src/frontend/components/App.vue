@@ -8,6 +8,7 @@ import CompareView from './CompareView.vue'
 import LayerControl from './LayerControl.vue'
 import Filter from './Filter.vue'
 import ToolToggle from './ToolToggle.vue'
+import ToolDropdown from './ToolDropdown.vue'
 
 const mapRef = ref(null)
 const showLeaderboard = ref(false)
@@ -47,12 +48,13 @@ function handleFilterChanged(change) {
 	<div id="toolbar_container">
 
 		<Search id="search" :counties="mapRef?.countyList ?? []" @select="handleSelect" />
-		<LayerControl id="layer-control" @changed="handleLayerControlChanged"/>
+		<LayerControl @changed="handleLayerControlChanged"/>
 		<Filter />
 		<ToolToggle @changed="(change) => showLeaderboard=change.value" />
+		<ToolDropdown><PropertyPanel /></ToolDropdown>
 	</div>
 	<Leaderboard :counties="mapRef?.countyList ?? []" @select="handleSelect" v-show="showLeaderboard" />
-	<!--<PropertyPanel />-->
+	
 	
 	<CompareView />
 </div>
@@ -67,6 +69,7 @@ function handleFilterChanged(change) {
 	position: fixed;
 	flex-direction: row;
 	flex: content;
+	width: 100%;
 	display: flex;
 	flex-wrap: nowrap;
 }

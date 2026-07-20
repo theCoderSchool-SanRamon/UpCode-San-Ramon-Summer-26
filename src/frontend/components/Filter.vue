@@ -25,6 +25,7 @@ watch(populationFilter, () => {emit("changed", {type: "populationFilter", value:
 .population-filter-slider-and-text {
 	display: inline-flex;
 	gap: 8px;
+	width: 100%;
 }
 .population-filter p {
 	margin-bottom: 4px;
@@ -32,7 +33,7 @@ watch(populationFilter, () => {emit("changed", {type: "populationFilter", value:
 .filter-body {
 	pointer-events: auto;
 	margin: 16px;
-	padding: 16px;
+	padding: 8px 10px;
 	background: var(--overlay-background);
 	backdrop-filter: var(--overlay-blur);
 	box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
