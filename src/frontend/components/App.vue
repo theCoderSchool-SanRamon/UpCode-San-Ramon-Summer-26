@@ -31,13 +31,6 @@ function handleLayerControlChanged(change) {
 	}
 }
 
-function handleFilterChanged(change) {
-	if (!mapRef.value) return
-	if (change.type === "populationfilter") {
-		mapRef.value.populationFilter.value = change.value
-	}
-}
-
 </script>
 
 <template>

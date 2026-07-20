@@ -252,22 +252,22 @@ onMounted(async () => {
 	countyData = await priceandrentcounty.json()
 	placeData = await priceandrentplace.json()
 
-	var features = new GeoJSON().readFeatures(
+	var countyFeatures = new GeoJSON().readFeatures(
 			countyGeometry,
 			{featureProjection: 'EPSG:3857', }
 		)
 
-	countySource.addFeatures(features)
+	countySource.addFeatures(countyFeatures)
 
-	features = new GeoJSON().readFeatures(
+	var placeFeatures = new GeoJSON().readFeatures(
 			placeGeometry,
 			{featureProjection: 'EPSG:3857', }
 		)
-	placeSource.addFeatures(features)
+	placeSource.addFeatures(placeFeatures)
 
 	countyFeaturesById = {}
 	const counties = []
-	for (const feature of features) {
+	for (const feature of countyFeatures) {
 		const key = getCountyId(feature)
 		countyFeaturesById[key] = feature
 		counties.push({ name: feature.get("NAME"), state: feature.get("STUSPS"), key })

@@ -1,13 +1,8 @@
 <script setup>
-import { computed, ref, watch, nextTick } from 'vue'
 import ToolDropdown from './ToolDropdown.vue'
 import { useCountyScores } from '../composables/countyScores.js'
 
 const {populationFilter} = useCountyScores()
-
-const emit = defineEmits(["changed"])
-watch(populationFilter, () => {emit("changed", {type: "populationFilter", value: populationFilter.value})})
-//watch(populationFilter, () => countylayer.changed())
 </script>
 
 <template>
