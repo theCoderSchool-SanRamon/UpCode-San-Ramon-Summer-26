@@ -13,7 +13,7 @@ watch(populationFilter, () => {emit("changed", {type: "populationFilter", value:
 <template>
 <ToolDropdown :icon-closed="'/107799.png'">
 	<div class="filter-body">
-		<div>
+		<div class="population-filter">
 			<p><b>Filter by County Population</b></p>
 			<div class="population-filter-slider-and-text"> <input type="range" v-model="populationFilter" min="0" max="1000000"> </input> ≥ {{Number(populationFilter).toLocaleString()}} </div>
 		</div>

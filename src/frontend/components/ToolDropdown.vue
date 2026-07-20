@@ -15,7 +15,8 @@ const uiEnabled = ref(false);
 <div id="toggle-wrapper">
 	
 <button id="toggle-button" @mousedown.prevent="uiEnabled = !uiEnabled">
-	<img :src="uiEnabled ? iconOpen : iconClosed" class="img-icon"></img>
+	<Transition><img :src="iconClosed" class="img-icon" v-if="!uiEnabled"></img></Transition>
+	<Transition><img :src="iconOpen" class="img-icon" v-if="uiEnabled"></img></Transition>
 </button>
 
 <Transition name="slot">
@@ -31,7 +32,12 @@ const uiEnabled = ref(false);
 </template>
 
 <style scoped>
-
+.v-enter-active, .v-leave-active {
+	transition: opacity 0.25s ease;
+}
+.v-enter-from, .v-leave-to {
+	opacity: 0;
+}
 .wrap {
 	overflow: hidden;
 	max-width: 1000px;
@@ -60,6 +66,7 @@ const uiEnabled = ref(false);
 	width: 20px;
 	height: 20px;
 	object-fit: contain;
+	position: absolute;
 }
 
 #toggle-button {

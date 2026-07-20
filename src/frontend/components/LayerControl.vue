@@ -19,37 +19,22 @@ watch(cityActive, () => {emit("changed", {type: "interactability", layer: "city"
 <template>
 	<ToolDropdown :icon-closed="'/openlayers.svg'" :icon-open="'/openlayers2.svg'">
 		<div id="layer-control-wrapper">
-			<tr>
-				<td>
-					<input type="checkbox" v-model="countyVisible">
-				</td>
-				<td>
-					<input type="checkbox" v-model="countyActive">
-				</td>
-				<td>
-					<p>
-						County
-					</p>
-				</td>
-			</tr>
-			<tr>
-				<td>
-					<input type="checkbox" v-model="cityVisible">
-				</td>
-				<td>
-					<input type="checkbox" v-model="cityActive">
-				</td>
-				<td>
-					<p>
-						City
-					</p>
-				</td>
-			</tr>
+			<h4>Show Layers:</h4>
+			<div class="l-item">City<input type="checkbox" v-model="cityVisible" /> </div>
+			<div class="l-item">County <input type="checkbox" v-model="countyVisible" /></div>
+			<h4>Allow Hovering:</h4>
+			<div class="l-item">City<input type="checkbox" v-model="cityActive" /> </div>
+			<div class="l-item">County <input type="checkbox" v-model="countyActive" /></div>
 		</div>
 	</ToolDropdown>
 
 </template>
 <style scoped>
+.l-item {
+	width: 100%;
+	display: inline-flex;
+	justify-content: space-between;
+}
 #layer-control-button {
 	pointer-events: auto;
 }
@@ -63,6 +48,9 @@ watch(cityActive, () => {emit("changed", {type: "interactability", layer: "city"
 	border-radius: 14px;
 	outline: none;
 	pointer-events: auto;
+}
+#layer-control-wrapper h4 {
+	margin-bottom: 4px;
 }
 td {
 	padding-left: 4px;
