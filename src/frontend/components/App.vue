@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import Map from './map.vue'
 import Search from './search.vue'
 import Leaderboard from './Leaderboard.vue'
@@ -9,8 +9,10 @@ import LayerControl from './LayerControl.vue'
 import Filter from './Filter.vue'
 import ToolToggle from './ToolToggle.vue'
 import ToolDropdown from './ToolDropdown.vue'
+import DetailBox from './DetailBox.vue'
 
 const mapRef = ref(null)
+const detailBoxRef = ref(null)
 const showLeaderboard = ref(false)
 
 function handleSelect(selection) {
@@ -39,6 +41,9 @@ function handleFilterChanged(change) {
 	}
 }
 
+function handleTriggerDetail(feature, place) {
+	detailBoxRef.value.activateDetail(feature, place)
+}
 </script>
 
 <template>
@@ -57,9 +62,10 @@ function handleFilterChanged(change) {
 	
 	
 	<CompareView />
+	<DetailBox ref="detailBoxRef" />
 </div>
 
-<Map id='map' ref="mapRef" />
+<Map id='map' ref="mapRef" @trigger-detail="handleTriggerDetail" />
 
 </template>
 
