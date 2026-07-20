@@ -15,8 +15,10 @@ import { fromLonLat, toLonLat } from 'ol/proj.js';
 import { useCountyScores } from '../composables/countyScores.js'
 import { usePropertyAnalysis } from '../composables/propertyAnalysis.js'
 
-const { countyScores, keyFor, ensureLoaded: ensureScoresLoaded, populationFilter, POPULATION_THRESHOLDS } = useCountyScores()
+const { countyScores, keyFor, ensureLoaded: ensureScoresLoaded, populationFilter} = useCountyScores()
 const { fetchProperty, addressQuery } = usePropertyAnalysis()
+
+
 
 const mapRoot = ref(null)
 let countyData = ref(null)
@@ -55,7 +57,7 @@ const hoverInfo = computed(() => {
 		population,
 		ratio: (houseprice != null && rent) ? houseprice / rent / 12 : null,
 		score: scoreInfo?.score ?? null,
-		filtered: !countyMeetsThreshold(id, POPULATION_THRESHOLDS[populationFilter.value]),
+		filtered: !countyMeetsThreshold(id, populationFilter.value),
 	}
 })
 
@@ -154,7 +156,7 @@ function countyMeetsThreshold(id, threshold) {
 
 function styleCountyFeature(feature) {
 	const id = getCountyId(feature)
-	const fillColor = countyMeetsThreshold(id, POPULATION_THRESHOLDS[populationFilter.value])
+	const fillColor = countyMeetsThreshold(id, populationFilter.value)
 		? getColor((Number(countyData[id][0]) / Number(countyData[id][1])) / 12, 60, false)
 		: '#B5B5B5'
 	const isHighlighted = id === highlightedId.value
@@ -321,8 +323,9 @@ onMounted(async () => {
 	loading.value = false
 })
 
-watch(populationFilter, () => countylayer.changed())
+
 watch(highlightedId, () => countylayer.changed())
+watch(populationFilter, () => countylayer.changed())
 
 function goToCounty(key) {
 	const feature = countyFeaturesById[key]
@@ -362,6 +365,7 @@ defineExpose({
 	goToCoordinate,
 	setVisible,
 	setInteractable,
+	populationFilter,
 })
 
 </script>
@@ -376,22 +380,13 @@ defineExpose({
 			<h3>{{ hoverInfo.name }}, {{ hoverInfo.state }}</h3>
 			<template v-if="hoverInfo.filtered"><i>Filtered: population below threshold</i><br></template>
 			Price/Rent Ratio: <b>{{ hoverInfo.ratio == null ? "N/A" : hoverInfo.ratio.toFixed(2) }}</b><br>
-			Median Contract Rent: $<b>{{ hoverInfo.rent == null ? "N/A" : hoverInfo.rent }}</b>/mo<br>
-			Median House Price: $<b>{{ hoverInfo.houseprice == null ? "N/A" : hoverInfo.houseprice }}</b><br>
+			Median Contract Rent: $<b>{{ hoverInfo.rent == null ? "N/A" : hoverInfo.rent.toLocaleString() }}</b>/mo<br>
+			Median House Price: $<b>{{ hoverInfo.houseprice == null ? "N/A" : hoverInfo.houseprice.toLocaleString() }}</b><br>
 			Population: <b>{{ hoverInfo.population != null ? hoverInfo.population.toLocaleString() : 'N/A' }}</b><br>
 			<template v-if="hoverInfo.score != null">Investment Score: <b>{{ hoverInfo.score.toFixed(1) }}</b></template>
 			<!--<template v-else>No price/rent data</template>-->
 		</div>
-		<div class="population-filter">
-			<label for="population-filter-select">Min. county population:</label>
-			<select id="population-filter-select" v-model="populationFilter">
-				<option value="all">All</option>
-				<option value="50k">50k+</option>
-				<option value="100k">100k+</option>
-				<option value="250k">250k+</option>
-				<option value="500k">500k+</option>
-			</select>
-		</div>
+
 	</div>
 	
 </template>

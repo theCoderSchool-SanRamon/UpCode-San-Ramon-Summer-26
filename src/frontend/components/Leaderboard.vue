@@ -8,7 +8,7 @@ const props = defineProps({
 const emit = defineEmits(['select'])
 
 const { weights, weightsSum, weightsValid, rawCountyData, countyScores,
-	ensureLoaded, resetWeights, keyFor, FACTORS, populationFilter, POPULATION_THRESHOLDS } = useCountyScores()
+	ensureLoaded, resetWeights, keyFor, FACTORS, populationFilter} = useCountyScores()
 
 onMounted(ensureLoaded)
 
@@ -34,7 +34,7 @@ function setSort(key) {
 
 const rows = computed(() => {
 	if (!rawCountyData.value) return []
-	const minPopulation = POPULATION_THRESHOLDS[populationFilter.value]
+	const minPopulation = populationFilter.value
 	const list = []
 	for (const c of props.counties) {
 		const dataKey = keyFor(c.name, c.state)
@@ -123,8 +123,9 @@ function selectRow(row) {
 	margin-left: 16px;
 	scrollbar-width: none;
 	flex: auto;
-	max-height: calc(95% - 32px);
+	max-height: calc(100%);
 	z-index: 100;
+	right: 0px;
 	padding: 16px;
 	background: var(--overlay-background);
 	backdrop-filter: var(--overlay-blur);

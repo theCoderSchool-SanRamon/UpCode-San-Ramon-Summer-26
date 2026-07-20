@@ -7,8 +7,10 @@ import PropertyPanel from './PropertyPanel.vue'
 import CompareView from './CompareView.vue'
 import LayerControl from './LayerControl.vue'
 import Filter from './Filter.vue'
+import ToolToggle from './ToolToggle.vue'
 
 const mapRef = ref(null)
+const showLeaderboard = ref(false)
 
 function handleSelect(selection) {
 	if (!mapRef.value) return
@@ -28,6 +30,14 @@ function handleLayerControlChanged(change) {
 		mapRef.value.setInteractable(change.layer, change.value)
 	}
 }
+
+function handleFilterChanged(change) {
+	if (!mapRef.value) return
+	if (change.type === "populationfilter") {
+		mapRef.value.populationFilter.value = change.value
+	}
+}
+
 </script>
 
 <template>
@@ -38,13 +48,13 @@ function handleLayerControlChanged(change) {
 
 		<Search id="search" :counties="mapRef?.countyList ?? []" @select="handleSelect" />
 		<LayerControl id="layer-control" @changed="handleLayerControlChanged"/>
-
 		<Filter />
+		<ToolToggle @changed="(change) => showLeaderboard=change.value" />
 
 	</div>
-
+	<Leaderboard :counties="mapRef?.countyList ?? []" @select="handleSelect" v-show="showLeaderboard" />
 	<!--<PropertyPanel />-->
-	<!-- <Leaderboard :counties="mapRef?.countyList ?? []" @select="handleSelect" /> -->
+	
 	<CompareView />
 </div>
 

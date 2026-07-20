@@ -1,16 +1,34 @@
 <script setup>
 import { computed, ref, watch, nextTick } from 'vue'
 import ToolDropdown from './ToolDropdown.vue'
+import { useCountyScores } from '../composables/countyScores.js'
+
+const {populationFilter} = useCountyScores()
+
+const emit = defineEmits(["changed"])
+watch(populationFilter, () => {emit("changed", {type: "populationFilter", value: populationFilter.value})})
+//watch(populationFilter, () => countylayer.changed())
 </script>
 
 <template>
-<ToolDropdown>
+<ToolDropdown :icon-closed="'/107799.png'">
 	<div class="filter-body">
+		<div>
+			<p><b>Filter by County Population</b></p>
+			<div class="population-filter-slider-and-text"> <input type="range" v-model="populationFilter" min="0" max="1000000"> </input> ≥ {{Number(populationFilter).toLocaleString()}} </div>
+		</div>
 	</div>
 </ToolDropdown>
 </template>
 
 <style scoped>
+.population-filter-slider-and-text {
+	display: inline-flex;
+	gap: 8px;
+}
+.population-filter p {
+	margin-bottom: 4px;
+}
 .filter-body {
 	pointer-events: auto;
 	margin: 16px;
