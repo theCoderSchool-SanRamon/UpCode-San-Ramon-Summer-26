@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import Map from './map.vue'
 import Search from './search.vue'
 import Leaderboard from './Leaderboard.vue'
@@ -8,8 +8,11 @@ import CompareView from './CompareView.vue'
 import LayerControl from './LayerControl.vue'
 import Filter from './Filter.vue'
 import ToolToggle from './ToolToggle.vue'
+import ToolDropdown from './ToolDropdown.vue'
+import DetailBox from './DetailBox.vue'
 
 const mapRef = ref(null)
+const detailBoxRef = ref(null)
 const showLeaderboard = ref(false)
 
 function handleSelect(selection) {
@@ -31,6 +34,9 @@ function handleLayerControlChanged(change) {
 	}
 }
 
+function handleTriggerDetail(feature, place) {
+	detailBoxRef.value.activateDetail(feature, place)
+}
 </script>
 
 <template>
@@ -40,17 +46,19 @@ function handleLayerControlChanged(change) {
 	<div id="toolbar_container">
 
 		<Search id="search" :counties="mapRef?.countyList ?? []" @select="handleSelect" />
-		<LayerControl id="layer-control" @changed="handleLayerControlChanged"/>
+		<LayerControl @changed="handleLayerControlChanged"/>
 		<Filter />
 		<ToolToggle @changed="(change) => showLeaderboard=change.value" />
+		<ToolDropdown><PropertyPanel /></ToolDropdown>
 	</div>
 	<Leaderboard :counties="mapRef?.countyList ?? []" @select="handleSelect" v-show="showLeaderboard" />
-	<!--<PropertyPanel />-->
+	
 	
 	<CompareView />
+	<DetailBox ref="detailBoxRef" />
 </div>
 
-<Map id='map' ref="mapRef" />
+<Map id='map' ref="mapRef" @trigger-detail="handleTriggerDetail" />
 
 </template>
 
@@ -60,6 +68,7 @@ function handleLayerControlChanged(change) {
 	position: fixed;
 	flex-direction: row;
 	flex: content;
+	width: 100%;
 	display: flex;
 	flex-wrap: nowrap;
 }

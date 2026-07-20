@@ -27,7 +27,6 @@ watch(cityActive, () => {emit("changed", {type: "interactability", layer: "city"
 			<div class="l-item">County <input type="checkbox" v-model="countyActive" /></div>
 		</div>
 	</ToolDropdown>
-
 </template>
 <style scoped>
 .l-item {
@@ -39,8 +38,8 @@ watch(cityActive, () => {emit("changed", {type: "interactability", layer: "city"
 	pointer-events: auto;
 }
 #layer-control-wrapper {
-	margin: 16px;
 	background: var(--overlay-background);
+	margin: 16px;
 	backdrop-filter: var(--overlay-blur);
 	padding: 8px 10px;
 	font: 14px Arial, sans-serif;

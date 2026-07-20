@@ -14,19 +14,20 @@ const uiEnabled = ref(false);
 
 <div id="toggle-wrapper">
 	
-<button id="toggle-button" @mousedown.prevent="uiEnabled = !uiEnabled">
-	<Transition><img :src="iconClosed" class="img-icon" v-if="!uiEnabled"></img></Transition>
-	<Transition><img :src="iconOpen" class="img-icon" v-if="uiEnabled"></img></Transition>
-</button>
+	<button id="toggle-button" @mousedown.prevent="uiEnabled = !uiEnabled">
+		<Transition><img :src="iconClosed" class="img-icon" v-if="!uiEnabled"></img></Transition>
+		<Transition><img :src="iconOpen" class="img-icon" v-if="uiEnabled"></img></Transition>
+	</button>
 
-<Transition name="slot">
-<div v-if="uiEnabled" class="wrap">
 	<Transition name="slot">
-	<slot  v-if="uiEnabled"></slot>
-	</Transition>
-</div>
-</Transition>
 
+	<div v-if="uiEnabled" class="wrap">
+		<Transition name="slot">
+			<slot v-if="uiEnabled"></slot>
+		</Transition>
+	</div>
+
+	</Transition>
 </div>
 
 </template>
@@ -39,8 +40,11 @@ const uiEnabled = ref(false);
 	opacity: 0;
 }
 .wrap {
-	overflow: hidden;
-	max-width: 1000px;
+	margin-top: 40px;
+	
+	max-width: 100%;
+
+	position: absolute;
 }
 .slot-enter-active {
 	transition: 
@@ -59,7 +63,7 @@ const uiEnabled = ref(false);
 .slot-enter-from, .slot-leave-to {
 	transform: scale(0.9) translateY(-200%);
 	opacity: 0;
-	max-width: 0px;
+	
 }
 
 .img-icon {
@@ -90,6 +94,7 @@ const uiEnabled = ref(false);
 	gap: 6px;
 	cursor: pointer;
 }
+
 #toggle-wrapper {
 	min-width: 16px;
 	min-height: 16px;
