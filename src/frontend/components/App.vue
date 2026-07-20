@@ -20,13 +20,12 @@ function handleSelect(selection) {
 }
 
 function handleLayerControlChanged(change) {
-	console.log(change)
 	if (!mapRef.value) return
 	if (change.type === "visibility") {
 		mapRef.value.setVisible(change.layer, change.value)
 	}
-	if (change.type === "interactability" && change.value) {
-		mapRef.value.setInteractable(change.layer)
+	if (change.type === "interactability") {
+		mapRef.value.setInteractable(change.layer, change.value)
 	}
 }
 </script>

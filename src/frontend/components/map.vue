@@ -28,23 +28,25 @@ let OSMLayer = null
 const countyList = ref([])
 let countyFeaturesById = {}
 const highlightedId = ref(null)
-let activeLayer = "county"
+let countyActive = true
+let cityActive = true
 
 const isHovering = ref(false)
 const mouseX = ref(0)
 const mouseY = ref(0)
 const hoveredFeature = ref(null)
+const isHoveringPlace = ref(false)
 const loading = ref(true)
 
 const hoverInfo = computed(() => {
 	const f = hoveredFeature.value
 	if (!f) return null
-	const id = getCountyId(f)
-	const data = countyData && countyData[id]
+	const id = isHoveringPlace.value ? getPlaceId(f) : getCountyId(f)
+	const data = isHoveringPlace.value ? placeData && placeData[id] : countyData && countyData[id]
 	const houseprice = data && data[0] > 0 ? Number(data[0]) : null
 	const rent = data && data[1] > 0 ? Number(data[1]) : null
 	const population = data && data[2] != null ? Number(data[2]) : null
-	const scoreInfo = countyScores.value[keyFor(f.get("NAME"), f.get("STUSPS"))]
+	const scoreInfo = isHoveringPlace.value ? null : countyScores.value[keyFor(f.get("NAME"), f.get("STUSPS"))]
 	return {
 		name: f.get("NAME"),
 		state: f.get("STUSPS"),
@@ -133,9 +135,7 @@ async function fetchListings(lat, lon, radiusMiles) {
 			features.push(feature)
 		}
 		listingsSource.addFeatures(features)
-	} catch (e) {
-		// silently skip; listings are a best-effort overlay
-	}
+	} catch (e) {} // silently skip; listings are a best-effort overlay
 }
 
 function getCountyId(feature) {
@@ -287,9 +287,10 @@ onMounted(async () => {
 			isHovering.value = false
 			return
 		}
-		const feature = mapInstance.forEachFeatureAtPixel(evt.pixel, f => f, { layerFilter: l => l === ((activeLayer === "county") ? countylayer : placelayer)})
+		const [feature, layer] = mapInstance.forEachFeatureAtPixel(evt.pixel, (f, l) => ([f, l]), { layerFilter: l => ((l === countylayer && countyActive) || (l === placelayer && cityActive))}) ?? [undefined, undefined]
 		hoveredFeature.value = feature ?? null
 		isHovering.value = !!feature
+		isHoveringPlace.value = layer === placelayer
 		if (highlightedId.value != null && isHovering.value) { highlightedId.value = null }
 	})
 	mapInstance.getViewport().addEventListener('mouseout', () => { isHovering.value = false })
@@ -336,7 +337,6 @@ function goToCoordinate(lon, lat, zoom = 11) {
 }
 
 function setVisible(layer, status) {
-	console.log(layer, status)
 	if (layer === "county") {
 		countylayer.setVisible(status)
 	}
@@ -345,8 +345,13 @@ function setVisible(layer, status) {
 	}
 }
 
-function setInteractable(layer) {
-	activeLayer = layer
+function setInteractable(layer, status) {
+	if (layer === "county") {
+		countyActive = status
+	}
+	if (layer === "city") {
+		cityActive = status
+	}
 }
 
 defineExpose({

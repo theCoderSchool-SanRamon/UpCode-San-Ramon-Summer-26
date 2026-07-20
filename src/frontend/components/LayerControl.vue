@@ -6,7 +6,7 @@ const layerControlActive = ref(false)
 const countyVisible = ref(true)
 const cityVisible = ref(true)
 const countyActive = ref(true)
-const cityActive = ref(false)
+const cityActive = ref(true)
 
 const emit = defineEmits(["changed"])
 
@@ -21,10 +21,10 @@ watch(cityActive, () => {emit("changed", {type: "interactability", layer: "city"
 		<div id="layer-control-wrapper">
 			<tr>
 				<td>
-					<input type="checkbox" v-model="countyVisible" checked>
+					<input type="checkbox" v-model="countyVisible">
 				</td>
 				<td>
-					<input type="radio" name="active-layer" v-model="countyActive" checked>
+					<input type="checkbox" v-model="countyActive">
 				</td>
 				<td>
 					<p>
@@ -34,10 +34,10 @@ watch(cityActive, () => {emit("changed", {type: "interactability", layer: "city"
 			</tr>
 			<tr>
 				<td>
-					<input type="checkbox" v-model="cityVisible" checked>
+					<input type="checkbox" v-model="cityVisible">
 				</td>
 				<td>
-					<input type="radio" name="active-layer" v-model="cityActive">
+					<input type="checkbox" v-model="cityActive">
 				</td>
 				<td>
 					<p>
