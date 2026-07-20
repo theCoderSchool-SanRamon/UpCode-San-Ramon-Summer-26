@@ -18,7 +18,7 @@ import { usePropertyAnalysis } from '../composables/propertyAnalysis.js'
 const { countyScores, keyFor, ensureLoaded: ensureScoresLoaded, populationFilter} = useCountyScores()
 const { fetchProperty, addressQuery } = usePropertyAnalysis()
 
-
+const emit = defineEmits(["triggerDetail"])
 
 const mapRoot = ref(null)
 let countyData = ref(null)
@@ -298,12 +298,15 @@ onMounted(async () => {
 	mapInstance.getViewport().addEventListener('mouseout', () => { isHovering.value = false })
 
 	mapInstance.on('click', (evt) => {
-		const feature = mapInstance.forEachFeatureAtPixel(evt.pixel, f => f, { layerFilter: l => l === listingsLayer })
-		if (!feature) return
-		const address = feature.get('address')
-		if (!address) return
-		addressQuery.value = address
-		fetchProperty(address).catch(() => {})
+		const listingFeature = mapInstance.forEachFeatureAtPixel(evt.pixel, f => f, { layerFilter: l => l === listingsLayer })
+		if (listingFeature) {
+			const address = listingFeature.get('address')
+			if (!address) return
+			addressQuery.value = address
+			fetchProperty(address).catch(() => {})
+		}
+		const [feature, layer] = mapInstance.forEachFeatureAtPixel(evt.pixel, (f, l) => ([f, l]), { layerFilter: l => ((l === countylayer && countyActive) || (l === placelayer && cityActive))}) ?? [null, null]
+		emit("triggerDetail", [feature, layer === placelayer])
 	})
 
 	mapInstance.on('moveend', () => {
