@@ -10,7 +10,7 @@ const props = defineProps({
 const enabled = ref(false);
 
 const emit = defineEmits(["changed"])
-watch(enabled, () => {emit("changed", {type: "toggle", value: enabled})})
+watch(enabled, () => {emit("changed", {type: "toggle", value: enabled.value})})
 
 </script>
 

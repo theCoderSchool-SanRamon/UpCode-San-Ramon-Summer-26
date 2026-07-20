@@ -50,7 +50,6 @@ function handleFilterChanged(change) {
 		<LayerControl id="layer-control" @changed="handleLayerControlChanged"/>
 		<Filter />
 		<ToolToggle @changed="(change) => showLeaderboard=change.value" />
-
 	</div>
 	<Leaderboard :counties="mapRef?.countyList ?? []" @select="handleSelect" v-show="showLeaderboard" />
 	<!--<PropertyPanel />-->
