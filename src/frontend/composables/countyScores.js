@@ -13,14 +13,12 @@ export const DEFAULT_WEIGHTS = Object.fromEntries(
 )
 const WEIGHT_SUM_TOLERANCE = 0.01
 
-export const POPULATION_THRESHOLDS = { all: 0, '50k': 50000, '100k': 100000, '250k': 250000, '500k': 500000 }
-
 const rawCountyData = ref(null)
 const loading = ref(false)
 const loaded = ref(false)
 const weights = reactive({ ...DEFAULT_WEIGHTS })
 const countyScoresInternal = ref({})
-const populationFilter = ref('all')
+const populationFilter = ref(0)
 
 function percentile(sortedVals, p) {
 	const k = (sortedVals.length - 1) * p
@@ -130,6 +128,5 @@ export function useCountyScores() {
 		FACTORS,
 		DEFAULT_WEIGHTS,
 		populationFilter,
-		POPULATION_THRESHOLDS,
 	}
 }

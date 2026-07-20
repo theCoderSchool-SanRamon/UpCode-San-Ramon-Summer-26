@@ -52,9 +52,11 @@ class RentCastRequester:
 				timeout=10,
 			)
 			if response.status_code != 200:
+				print(f"RentCast {path} failed for '{address}': {response.status_code} {response.text[:300]}")
 				return None
 			return response.json()
-		except (requests.RequestException, ValueError):
+		except (requests.RequestException, ValueError) as e:
+			print(f"RentCast {path} errored for '{address}': {e}")
 			return None
 
 	def fetch(self, address: str) -> dict:
@@ -85,6 +87,12 @@ class RentCastRequester:
 			"rentEstimate": rent.get("rent") if rent else None,
 		}
 
+def _has_property_data(data: dict) -> bool:
+	if not data:
+		return False
+	fields = ("beds", "baths", "sqft", "priceEstimate", "rentEstimate")
+	return any(data.get(f) is not None for f in fields)
+
 
 def get_property(address: str) -> dict:
 	address = (address or "").strip()
@@ -99,6 +107,7 @@ def get_property(address: str) -> dict:
 
 		data = RentCastRequester().fetch(address)
 
-		cache[key] = data
-		_save_cache(cache)
+		if _has_property_data(data):
+			cache[key] = data
+			_save_cache(cache)
 		return data

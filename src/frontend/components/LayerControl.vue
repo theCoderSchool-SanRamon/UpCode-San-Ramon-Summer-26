@@ -1,11 +1,12 @@
 <script setup>
 import { ref, nextTick, watch } from 'vue';
+import ToolDropdown from './ToolDropdown.vue'
 
 const layerControlActive = ref(false)
 const countyVisible = ref(true)
 const cityVisible = ref(true)
 const countyActive = ref(true)
-const cityActive = ref(false)
+const cityActive = ref(true)
 
 const emit = defineEmits(["changed"])
 
@@ -14,57 +15,31 @@ watch(cityVisible, () => {emit("changed", {type: "visibility", layer: "city", va
 watch(countyActive, () => {emit("changed", {type: "interactability", layer: "county", value: countyActive.value})})
 watch(cityActive, () => {emit("changed", {type: "interactability", layer: "city", value: cityActive.value})})
 
-async function onLayerControlButton() {
-	layerControlActive.value=!layerControlActive.value
-	/*if (layerControlActive.value) {
-		await nextTick()
-		searchInputEntry.value.focus()
-	}*/
-}
 </script>
 <template>
-	<div id="layer-control-container">
-		<button id="layer-control-button" v-if="!layerControlActive" @click="onLayerControlButton()">
-			🗃️
-		</button>
-		<div id="layer-control-wrapper" v-if="layerControlActive">
-			<tr>
-				<td>
-					<input type="checkbox" v-model="countyVisible" checked>
-				</td>
-				<td>
-					<input type="radio" name="active-layer" v-model="countyActive" checked>
-				</td>
-				<td>
-					<p>
-						County
-					</p>
-				</td>
-			</tr>
-			<tr>
-				<td>
-					<input type="checkbox" v-model="cityVisible" checked>
-				</td>
-				<td>
-					<input type="radio" name="active-layer" v-model="cityActive">
-				</td>
-				<td>
-					<p>
-						City
-					</p>
-				</td>
-			</tr>
+	<ToolDropdown :icon-closed="'/openlayers.svg'" :icon-open="'/openlayers2.svg'">
+		<div id="layer-control-wrapper">
+			<h4>Show Layers:</h4>
+			<div class="l-item">City<input type="checkbox" v-model="cityVisible" /> </div>
+			<div class="l-item">County <input type="checkbox" v-model="countyVisible" /></div>
+			<h4>Allow Hovering:</h4>
+			<div class="l-item">City<input type="checkbox" v-model="cityActive" /> </div>
+			<div class="l-item">County <input type="checkbox" v-model="countyActive" /></div>
 		</div>
-	</div>
+	</ToolDropdown>
 </template>
 <style scoped>
+.l-item {
+	width: 100%;
+	display: inline-flex;
+	justify-content: space-between;
+}
 #layer-control-button {
 	pointer-events: auto;
 }
 #layer-control-wrapper {
-	width: 256px;
-	margin: 16px;
 	background: var(--overlay-background);
+	margin: 16px;
 	backdrop-filter: var(--overlay-blur);
 	padding: 8px 10px;
 	font: 14px Arial, sans-serif;
@@ -72,6 +47,9 @@ async function onLayerControlButton() {
 	border-radius: 14px;
 	outline: none;
 	pointer-events: auto;
+}
+#layer-control-wrapper h4 {
+	margin-bottom: 4px;
 }
 td {
 	padding-left: 4px;

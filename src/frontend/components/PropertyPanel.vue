@@ -169,10 +169,13 @@ const METRICS_META = [
 </template>
 
 <style scoped>
+
 #property-lookup {
 	display: flex;
 	flex-direction: column;
 	pointer-events: none;
+	width: 100%;
+	min-width: 64px;
 }
 .lookup-form {
 	pointer-events: none;

@@ -15,8 +15,10 @@ import { fromLonLat, toLonLat } from 'ol/proj.js';
 import { useCountyScores } from '../composables/countyScores.js'
 import { usePropertyAnalysis } from '../composables/propertyAnalysis.js'
 
-const { countyScores, keyFor, ensureLoaded: ensureScoresLoaded, populationFilter, POPULATION_THRESHOLDS } = useCountyScores()
+const { countyScores, keyFor, ensureLoaded: ensureScoresLoaded, populationFilter} = useCountyScores()
 const { fetchProperty, addressQuery } = usePropertyAnalysis()
+
+const emit = defineEmits(["triggerDetail"])
 
 const mapRoot = ref(null)
 let countyData = ref(null)
@@ -28,23 +30,25 @@ let OSMLayer = null
 const countyList = ref([])
 let countyFeaturesById = {}
 const highlightedId = ref(null)
-let activeLayer = "county"
+let countyActive = true
+let cityActive = true
 
 const isHovering = ref(false)
 const mouseX = ref(0)
 const mouseY = ref(0)
 const hoveredFeature = ref(null)
+const isHoveringPlace = ref(false)
 const loading = ref(true)
 
 const hoverInfo = computed(() => {
 	const f = hoveredFeature.value
 	if (!f) return null
-	const id = getCountyId(f)
-	const data = countyData && countyData[id]
+	const id = isHoveringPlace.value ? getPlaceId(f) : getCountyId(f)
+	const data = isHoveringPlace.value ? placeData && placeData[id] : countyData && countyData[id]
 	const houseprice = data && data[0] > 0 ? Number(data[0]) : null
 	const rent = data && data[1] > 0 ? Number(data[1]) : null
 	const population = data && data[2] != null ? Number(data[2]) : null
-	const scoreInfo = countyScores.value[keyFor(f.get("NAME"), f.get("STUSPS"))]
+	const scoreInfo = isHoveringPlace.value ? null : countyScores.value[keyFor(f.get("NAME"), f.get("STUSPS"))]
 	return {
 		name: f.get("NAME"),
 		state: f.get("STUSPS"),
@@ -53,7 +57,7 @@ const hoverInfo = computed(() => {
 		population,
 		ratio: (houseprice != null && rent) ? houseprice / rent / 12 : null,
 		score: scoreInfo?.score ?? null,
-		filtered: !countyMeetsThreshold(id, POPULATION_THRESHOLDS[populationFilter.value]),
+		filtered: !countyMeetsThreshold(id, populationFilter.value),
 	}
 })
 
@@ -133,9 +137,7 @@ async function fetchListings(lat, lon, radiusMiles) {
 			features.push(feature)
 		}
 		listingsSource.addFeatures(features)
-	} catch (e) {
-		// silently skip; listings are a best-effort overlay
-	}
+	} catch (e) {} // silently skip; listings are a best-effort overlay
 }
 
 function getCountyId(feature) {
@@ -154,7 +156,7 @@ function countyMeetsThreshold(id, threshold) {
 
 function styleCountyFeature(feature) {
 	const id = getCountyId(feature)
-	const fillColor = countyMeetsThreshold(id, POPULATION_THRESHOLDS[populationFilter.value])
+	const fillColor = countyMeetsThreshold(id, populationFilter.value)
 		? getColor((Number(countyData[id][0]) / Number(countyData[id][1])) / 12, 60, false)
 		: '#B5B5B5'
 	const isHighlighted = id === highlightedId.value
@@ -250,22 +252,22 @@ onMounted(async () => {
 	countyData = await priceandrentcounty.json()
 	placeData = await priceandrentplace.json()
 
-	var features = new GeoJSON().readFeatures(
+	var countyFeatures = new GeoJSON().readFeatures(
 			countyGeometry,
 			{featureProjection: 'EPSG:3857', }
 		)
 
-	countySource.addFeatures(features)
+	countySource.addFeatures(countyFeatures)
 
-	features = new GeoJSON().readFeatures(
+	var placeFeatures = new GeoJSON().readFeatures(
 			placeGeometry,
 			{featureProjection: 'EPSG:3857', }
 		)
-	placeSource.addFeatures(features)
+	placeSource.addFeatures(placeFeatures)
 
 	countyFeaturesById = {}
 	const counties = []
-	for (const feature of features) {
+	for (const feature of countyFeatures) {
 		const key = getCountyId(feature)
 		countyFeaturesById[key] = feature
 		counties.push({ name: feature.get("NAME"), state: feature.get("STUSPS"), key })
@@ -287,20 +289,24 @@ onMounted(async () => {
 			isHovering.value = false
 			return
 		}
-		const feature = mapInstance.forEachFeatureAtPixel(evt.pixel, f => f, { layerFilter: l => l === ((activeLayer === "county") ? countylayer : placelayer)})
+		const [feature, layer] = mapInstance.forEachFeatureAtPixel(evt.pixel, (f, l) => ([f, l]), { layerFilter: l => ((l === countylayer && countyActive) || (l === placelayer && cityActive))}) ?? [undefined, undefined]
 		hoveredFeature.value = feature ?? null
 		isHovering.value = !!feature
+		isHoveringPlace.value = layer === placelayer
 		if (highlightedId.value != null && isHovering.value) { highlightedId.value = null }
 	})
 	mapInstance.getViewport().addEventListener('mouseout', () => { isHovering.value = false })
 
 	mapInstance.on('click', (evt) => {
-		const feature = mapInstance.forEachFeatureAtPixel(evt.pixel, f => f, { layerFilter: l => l === listingsLayer })
-		if (!feature) return
-		const address = feature.get('address')
-		if (!address) return
-		addressQuery.value = address
-		fetchProperty(address).catch(() => {})
+		const listingFeature = mapInstance.forEachFeatureAtPixel(evt.pixel, f => f, { layerFilter: l => l === listingsLayer })
+		if (listingFeature) {
+			const address = listingFeature.get('address')
+			if (!address) return
+			addressQuery.value = address
+			fetchProperty(address).catch(() => {})
+		}
+		const [feature, layer] = mapInstance.forEachFeatureAtPixel(evt.pixel, (f, l) => ([f, l]), { layerFilter: l => ((l === countylayer && countyActive) || (l === placelayer && cityActive))}) ?? [null, null]
+		emit("triggerDetail", [feature, layer === placelayer])
 	})
 
 	mapInstance.on('moveend', () => {
@@ -320,8 +326,9 @@ onMounted(async () => {
 	loading.value = false
 })
 
-watch(populationFilter, () => countylayer.changed())
+
 watch(highlightedId, () => countylayer.changed())
+watch(populationFilter, () => countylayer.changed())
 
 function goToCounty(key) {
 	const feature = countyFeaturesById[key]
@@ -336,7 +343,6 @@ function goToCoordinate(lon, lat, zoom = 11) {
 }
 
 function setVisible(layer, status) {
-	console.log(layer, status)
 	if (layer === "county") {
 		countylayer.setVisible(status)
 	}
@@ -345,8 +351,13 @@ function setVisible(layer, status) {
 	}
 }
 
-function setInteractable(layer) {
-	activeLayer = layer
+function setInteractable(layer, status) {
+	if (layer === "county") {
+		countyActive = status
+	}
+	if (layer === "city") {
+		cityActive = status
+	}
 }
 
 defineExpose({
@@ -357,6 +368,7 @@ defineExpose({
 	goToCoordinate,
 	setVisible,
 	setInteractable,
+	populationFilter,
 })
 
 </script>
@@ -371,22 +383,13 @@ defineExpose({
 			<h3>{{ hoverInfo.name }}, {{ hoverInfo.state }}</h3>
 			<template v-if="hoverInfo.filtered"><i>Filtered: population below threshold</i><br></template>
 			Price/Rent Ratio: <b>{{ hoverInfo.ratio == null ? "N/A" : hoverInfo.ratio.toFixed(2) }}</b><br>
-			Median Contract Rent: $<b>{{ hoverInfo.rent == null ? "N/A" : hoverInfo.rent }}</b>/mo<br>
-			Median House Price: $<b>{{ hoverInfo.houseprice == null ? "N/A" : hoverInfo.houseprice }}</b><br>
+			Median Contract Rent: $<b>{{ hoverInfo.rent == null ? "N/A" : hoverInfo.rent.toLocaleString() }}</b>/mo<br>
+			Median House Price: $<b>{{ hoverInfo.houseprice == null ? "N/A" : hoverInfo.houseprice.toLocaleString() }}</b><br>
 			Population: <b>{{ hoverInfo.population != null ? hoverInfo.population.toLocaleString() : 'N/A' }}</b><br>
 			<template v-if="hoverInfo.score != null">Investment Score: <b>{{ hoverInfo.score.toFixed(1) }}</b></template>
 			<!--<template v-else>No price/rent data</template>-->
 		</div>
-		<div class="population-filter">
-			<label for="population-filter-select">Min. county population:</label>
-			<select id="population-filter-select" v-model="populationFilter">
-				<option value="all">All</option>
-				<option value="50k">50k+</option>
-				<option value="100k">100k+</option>
-				<option value="250k">250k+</option>
-				<option value="500k">500k+</option>
-			</select>
-		</div>
+
 	</div>
 	
 </template>

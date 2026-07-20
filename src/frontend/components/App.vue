@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import Map from './map.vue'
 import Search from './search.vue'
 import Leaderboard from './Leaderboard.vue'
@@ -7,8 +7,13 @@ import PropertyPanel from './PropertyPanel.vue'
 import CompareView from './CompareView.vue'
 import LayerControl from './LayerControl.vue'
 import Filter from './Filter.vue'
+import ToolToggle from './ToolToggle.vue'
+import ToolDropdown from './ToolDropdown.vue'
+import DetailBox from './DetailBox.vue'
 
 const mapRef = ref(null)
+const detailBoxRef = ref(null)
+const showLeaderboard = ref(false)
 
 function handleSelect(selection) {
 	if (!mapRef.value) return
@@ -20,14 +25,17 @@ function handleSelect(selection) {
 }
 
 function handleLayerControlChanged(change) {
-	console.log(change)
 	if (!mapRef.value) return
 	if (change.type === "visibility") {
 		mapRef.value.setVisible(change.layer, change.value)
 	}
-	if (change.type === "interactability" && change.value) {
-		mapRef.value.setInteractable(change.layer)
+	if (change.type === "interactability") {
+		mapRef.value.setInteractable(change.layer, change.value)
 	}
+}
+
+function handleTriggerDetail(feature, place) {
+	detailBoxRef.value.activateDetail(feature, place)
 }
 </script>
 
@@ -38,27 +46,29 @@ function handleLayerControlChanged(change) {
 	<div id="toolbar_container">
 
 		<Search id="search" :counties="mapRef?.countyList ?? []" @select="handleSelect" />
-		<!--<LayerControl id="layer-control" @changed="handleLayerControlChanged"/>-->
-
+		<LayerControl @changed="handleLayerControlChanged"/>
 		<Filter />
-
+		<ToolToggle @changed="(change) => showLeaderboard=change.value" />
+		<ToolDropdown><PropertyPanel /></ToolDropdown>
 	</div>
-
-	<PropertyPanel />
-	<!-- <Leaderboard :counties="mapRef?.countyList ?? []" @select="handleSelect" /> -->
+	<Leaderboard :counties="mapRef?.countyList ?? []" @select="handleSelect" v-show="showLeaderboard" />
+	
+	
 	<CompareView />
+	<DetailBox ref="detailBoxRef" />
 </div>
 
-<Map id='map' ref="mapRef" />
+<Map id='map' ref="mapRef" @trigger-detail="handleTriggerDetail" />
 
 </template>
 
 <style scoped>
 
 #toolbar_container {
-
+	position: fixed;
 	flex-direction: row;
 	flex: content;
+	width: 100%;
 	display: flex;
 	flex-wrap: nowrap;
 }

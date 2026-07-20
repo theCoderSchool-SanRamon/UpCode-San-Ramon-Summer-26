@@ -237,7 +237,7 @@ async function onSearchButton() {
 	transition: width 0.2s ease-in-out;
 }
 #search-input:focus, #search-input.fakefocus {
-	width: 25%;
+	width: 20vw;
 }
 #mode-select {
 	margin-left: 16px;
@@ -258,7 +258,7 @@ async function onSearchButton() {
 .suggestions {
 	list-style: none;
 	max-height: calc(100vh - 140px);
-	max-width: 25%;
+	max-width: 100%;
 	margin-left: 16px;
 	overflow-y: auto;
 	border-radius: 4px;
