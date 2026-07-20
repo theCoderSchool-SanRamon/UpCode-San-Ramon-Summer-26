@@ -48,7 +48,7 @@ function handleTriggerDetail(feature, place) {
 		<Search id="search" :counties="mapRef?.countyList ?? []" @select="handleSelect" />
 		<LayerControl @changed="handleLayerControlChanged"/>
 		<Filter />
-		<ToolToggle @changed="(change) => showLeaderboard=change.value" />
+		<ToolToggle :icon="'/ranking.svg'" @changed="(change) => showLeaderboard=change.value" />
 		<ToolDropdown><PropertyPanel /></ToolDropdown>
 	</div>
 	<Leaderboard :counties="mapRef?.countyList ?? []" @select="handleSelect" v-show="showLeaderboard" />
