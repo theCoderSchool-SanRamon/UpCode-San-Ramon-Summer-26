@@ -49,11 +49,11 @@ function handleTriggerDetail(feature, place) {
 		<Filter />
 		<ToolToggle :icon="'/ranking.svg'" @changed="(change) => showLeaderboard=change.value" />
 	</div>
+	<DetailBox ref="detailBoxRef" />
 	<Leaderboard :counties="mapRef?.countyList ?? []" @select="handleSelect" v-show="showLeaderboard" />
 	<PropertyPanel />
 
 	<CompareView />
-	<DetailBox ref="detailBoxRef" />
 </div>
 
 <Map id='map' ref="mapRef" @trigger-detail="handleTriggerDetail" />
