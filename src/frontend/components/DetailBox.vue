@@ -13,7 +13,7 @@ const invlerp = (l, u, v) => (v - l) / (u - l)
 function activateDetail(feature, place) {
 	if (!feature) {return}
 	detailVisible.value = true
-	buildChart(place ? fetch("/api/census?query=B25077_001E,B25058_001E,B01003_001E&place=" + feature.get("PLACEFP") + "&state=" + feature.get("STATEFP")) : null) // fetch("/api/census?query=B25077_001E,B25058_001E,B01003_001E&county=")) // not possible with current data set
+	buildChart(place ? fetch("/api/census?query=B25077_001E,B25058_001E,B01003_001E&place=" + feature.get("PLACEFP") + "&state=" + feature.get("STATEFP")) : fetch("/api/census?query=B25077_001E,B25058_001E,B01003_001E&county=" + feature.get("COUNTYFP") + "&state=" + feature.get("STATEFP")))
 }
 
 async function buildChart(data) {
