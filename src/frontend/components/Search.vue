@@ -54,7 +54,6 @@ async function fetchSearch(query) {
 		const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=12&countrycode=US&dedupe=1`
 		const res = await fetch(url, { headers: { 'Accept-Language': 'en' } })
 		const data = await res.json()
-		console.log(data.features)
 		const cityTypes = ['city', 'town', 'village', 'hamlet', 'municipality', 'borough']
 		searchSuggestions.value = data.features
 			.filter(r => {
