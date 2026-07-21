@@ -28,8 +28,10 @@ function handleLayerControlChanged(change) {
 	if (change.type === "visibility") {
 		mapRef.value.setVisible(change.layer, change.value)
 	}
-	if (change.type === "interactability") {
+	else if (change.type === "interactability") {
 		mapRef.value.setInteractable(change.layer, change.value)
+	} else if (change.type === "heatmap") {
+		mapRef.value.heatmapShows = change.value
 	}
 }
 

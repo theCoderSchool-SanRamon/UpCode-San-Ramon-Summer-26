@@ -20,6 +20,7 @@ const { fetchProperty, addressQuery } = usePropertyAnalysis()
 
 const emit = defineEmits(["triggerDetail"])
 
+const heatmapShows = ref("pricerent")
 const mapRoot = ref(null)
 let countyData = ref(null)
 let placeData = ref(null)
@@ -156,8 +157,21 @@ function countyMeetsThreshold(id, threshold) {
 
 function styleCountyFeature(feature) {
 	const id = getCountyId(feature)
+	let dataPoint
+	switch (heatmapShows.value) {
+		case "pricerent":
+			dataPoint = (Number(countyData[id][0]) / Number(countyData[id][1]))/12 // TODO: CHANGE ALL THE OTHER ONES
+			break;
+		case "score":
+			dataPoint = (Number(countyData[id][0]) / Number(countyData[id][1]))/12
+			break;
+		case "population":
+			dataPoint = (Number(countyData[id][0]) / Number(countyData[id][1]))/12
+			break;
+	}
+
 	const fillColor = countyMeetsThreshold(id, populationFilter.value)
-		? getColor((Number(countyData[id][0]) / Number(countyData[id][1])) / 12, 60, false)
+		? getColor(dataPoint, 60, false)
 		: '#B5B5B5'
 	const isHighlighted = id === highlightedId.value
 	return new Style({
@@ -331,6 +345,7 @@ onMounted(async () => {
 
 watch(highlightedId, () => countylayer.changed())
 watch(populationFilter, () => countylayer.changed())
+watch(heatmapShows, () => countylayer.changed())
 
 function goToCounty(key) {
 	const feature = countyFeaturesById[key]
@@ -370,6 +385,7 @@ defineExpose({
 	goToCoordinate,
 	setVisible,
 	setInteractable,
+	heatmapShows,
 	populationFilter,
 })
 

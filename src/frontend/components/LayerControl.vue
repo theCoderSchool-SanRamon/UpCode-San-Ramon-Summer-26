@@ -7,6 +7,7 @@ const countyVisible = ref(true)
 const cityVisible = ref(true)
 const countyActive = ref(true)
 const cityActive = ref(true)
+const heatmapShows = ref("pricerent")
 
 const emit = defineEmits(["changed"])
 
@@ -14,6 +15,7 @@ watch(countyVisible, () => {emit("changed", {type: "visibility", layer: "county"
 watch(cityVisible, () => {emit("changed", {type: "visibility", layer: "city", value: cityVisible.value})})
 watch(countyActive, () => {emit("changed", {type: "interactability", layer: "county", value: countyActive.value})})
 watch(cityActive, () => {emit("changed", {type: "interactability", layer: "city", value: cityActive.value})})
+watch(heatmapShows, () => {emit("changed", {type: "heatmap", value: heatmapShows.value})})
 
 </script>
 <template>
@@ -25,6 +27,10 @@ watch(cityActive, () => {emit("changed", {type: "interactability", layer: "city"
 			<h4>Allow Hovering:</h4>
 			<div class="l-item">City<input type="checkbox" v-model="cityActive" /> </div>
 			<div class="l-item">County <input type="checkbox" v-model="countyActive" /></div>
+			<h4>Show on Heatmap:</h4>
+			<div class="l-item">Price-Rent Ratio<input type="radio" name="heatmapshows" value="pricerent" v-model="heatmapShows" /></div>
+			<div class="l-item">Investment Score<input type="radio" name="heatmapshows" value="score" v-model="heatmapShows" /></div>
+			<div class="l-item">Population<input type="radio" name="heatmapshows" value="population" v-model="heatmapShows" /></div>
 		</div>
 	</ToolDropdown>
 </template>

@@ -16,7 +16,7 @@ export default defineConfig({
 
   // Development server settings
   server: {
-    host: true,
+    host: false,
     port: 3000,       // Change the default port if needed
     open: false,       // Automatically open the app in your browser on start
     proxy: {
