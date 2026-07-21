@@ -8,7 +8,6 @@ import CompareView from './CompareView.vue'
 import LayerControl from './LayerControl.vue'
 import Filter from './Filter.vue'
 import ToolToggle from './ToolToggle.vue'
-import ToolDropdown from './ToolDropdown.vue'
 import DetailBox from './DetailBox.vue'
 
 const mapRef = ref(null)
@@ -49,11 +48,10 @@ function handleTriggerDetail(feature, place) {
 		<LayerControl @changed="handleLayerControlChanged"/>
 		<Filter />
 		<ToolToggle :icon="'/ranking.svg'" @changed="(change) => showLeaderboard=change.value" />
-		<ToolDropdown><PropertyPanel /></ToolDropdown>
 	</div>
 	<Leaderboard :counties="mapRef?.countyList ?? []" @select="handleSelect" v-show="showLeaderboard" />
-	
-	
+	<PropertyPanel />
+
 	<CompareView />
 	<DetailBox ref="detailBoxRef" />
 </div>

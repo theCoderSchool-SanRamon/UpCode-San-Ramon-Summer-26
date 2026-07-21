@@ -3,19 +3,9 @@ import { computed } from 'vue'
 import { usePropertyAnalysis } from '../composables/propertyAnalysis.js'
 
 const {
-	assumptions, currentProperty, compareList, loading, error, addressQuery, MAX_COMPARE,
-	fetchProperty, addToCompare, resetAssumptions, computeMetrics, countyContext,
+	assumptions, currentProperty, compareList, loading, error, MAX_COMPARE,
+	addToCompare, resetAssumptions, computeMetrics, countyContext,
 } = usePropertyAnalysis()
-
-async function handleSubmit() {
-	const address = addressQuery.value.trim()
-	if (!address) return
-	try {
-		await fetchProperty(address)
-	}
-	catch (e) {
-	}
-}
 
 function closePanel() {
 	currentProperty.value = null
@@ -64,15 +54,6 @@ const METRICS_META = [
 <template>
 
 <div id="property-lookup">
-	<form class="lookup-form" @submit.prevent="handleSubmit">
-		<input
-			class="lookup-input"
-			type="text"
-			placeholder="Analyze a property... (full address)"
-			v-model="addressQuery"
-			autocomplete="off"
-		/>
-	</form>
 	<div class="lookup-status" v-if="loading">Looking up property…</div>
 	<div class="lookup-status error" v-else-if="error">{{ error }}</div>
 
@@ -176,27 +157,10 @@ const METRICS_META = [
 	pointer-events: none;
 	width: 100%;
 	min-width: 64px;
-}
-.lookup-form {
-	pointer-events: none;
-}
-.lookup-input {
-	width: 25%;
-	margin: 0 16px 16px;
-	background: var(--overlay-background);
-	backdrop-filter: blur(5px);
-	padding: 8px 10px;
-	font: 14px Arial, sans-serif;
-	border: 1px solid #ccc;
-	border-radius: 14px;
-	outline: none;
-	pointer-events: auto;
-}
-.lookup-input:focus {
-	border-color: #666;
+	margin-top: 64px;
 }
 .lookup-status {
-	margin: -8px 16px 16px;
+	margin: 0 16px 16px;
 	font: 12px Arial, sans-serif;
 	color: #777;
 	pointer-events: none;

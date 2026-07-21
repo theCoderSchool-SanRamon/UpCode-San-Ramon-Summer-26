@@ -4,9 +4,18 @@ import { computed, ref, watch, nextTick } from 'vue'
 const props = defineProps({
 	iconClosed: {type: String, default: ""},
 	iconOpen: {type: String, default: ""},
+	modelValue: {type: Boolean, default: null},
 })
+const emit = defineEmits(['update:modelValue'])
 
-const uiEnabled = ref(false);
+const internalEnabled = ref(false);
+const uiEnabled = computed({
+	get: () => props.modelValue !== null ? props.modelValue : internalEnabled.value,
+	set: (v) => {
+		if (props.modelValue !== null) emit('update:modelValue', v)
+		else internalEnabled.value = v
+	},
+})
 
 </script>
 
