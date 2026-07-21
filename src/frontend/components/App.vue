@@ -9,6 +9,7 @@ import LayerControl from './LayerControl.vue'
 import Filter from './Filter.vue'
 import ToolToggle from './ToolToggle.vue'
 import DetailBox from './DetailBox.vue'
+import About from './About.vue'
 
 const mapRef = ref(null)
 const detailBoxRef = ref(null)
@@ -50,6 +51,7 @@ function handleTriggerDetail(feature, place) {
 		<LayerControl @changed="handleLayerControlChanged"/>
 		<Filter />
 		<ToolToggle :icon="'/ranking.svg'" @changed="(change) => showLeaderboard=change.value" />
+		<About />
 	</div>
 	<DetailBox ref="detailBoxRef" />
 	<Leaderboard :counties="mapRef?.countyList ?? []" @select="handleSelect" v-show="showLeaderboard" />
