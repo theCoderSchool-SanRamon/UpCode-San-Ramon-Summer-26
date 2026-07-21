@@ -1,12 +1,14 @@
 <script setup>
 import { Chart, RadarController, RadialLinearScale, PointElement, LineElement } from 'chart.js';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
 Chart.register(RadarController, RadialLinearScale, PointElement, LineElement)
 
 const detailVisible = ref(false)
 const radarCanvas = ref(null)
 const activeChart = ref(null)
+
+const invlerp = (l, u, v) => (v - l) / (u - l)
 
 function activateDetail(feature, place) {
 	if (!feature) {return}
@@ -16,15 +18,28 @@ function activateDetail(feature, place) {
 
 async function buildChart(data) {
 	data = await data
-	data = await data.json()
-	console.log(Object.values(data))
+	data = Object.values(await data.json())[0]
+	data[0] = invlerp(0, 2000000, data[0])
+	data[1] = invlerp(0, 3000, data[1])
+	data[2] = Math.log(data[2] / 100) / Math.log(4000000 / 100)
 	activeChart.value = new Chart(radarCanvas.value, {
 		type: "radar",
 		data: {
 			labels: ["Price", "Rent", "Population"],
 			datasets: [{
-				data: Object.values(data)[0]
+				data: Object.values(data)
 			}]
+		},
+		options: {
+			scales: {
+				r: {
+					min: 0,
+					max: 1,
+					ticks: {
+						display: false
+					}
+				}
+			}
 		}
 	})
 }
@@ -33,6 +48,10 @@ function deactivate() {
 	detailVisible.value = false
 	activeChart.value.destroy()
 }
+
+onMounted(async () => {
+	
+})
 
 defineExpose({
 	activateDetail
