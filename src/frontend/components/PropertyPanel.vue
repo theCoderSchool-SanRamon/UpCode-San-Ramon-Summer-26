@@ -4,7 +4,7 @@ import { usePropertyAnalysis } from '../composables/propertyAnalysis.js'
 
 const {
 	assumptions, currentProperty, compareList, loading, error, MAX_COMPARE,
-	addToCompare, resetAssumptions, computeMetrics, countyContext,
+	addToCompare, resetAssumptions, computeMetrics, computePropertyScore, countyContext,
 } = usePropertyAnalysis()
 
 function closePanel() {
@@ -12,7 +12,16 @@ function closePanel() {
 }
 
 const metrics = computed(() => computeMetrics(currentProperty.value))
+const investmentScore = computed(() => computePropertyScore(metrics.value))
 const context = computed(() => countyContext(currentProperty.value))
+
+function scoreColor(score) {
+	if (score == null) return '#999'
+	const pct = Math.min(Math.max(score, 0), 100)
+	return pct < 50
+		? `color-mix(in srgb, red, yellow ${pct * 2}%)`
+		: `color-mix(in srgb, yellow, green ${(pct - 50) * 2}%)`
+}
 
 const alreadyCompared = computed(() =>
 	!!currentProperty.value && compareList.value.some(p => p.id === currentProperty.value.id)
@@ -68,6 +77,9 @@ const METRICS_META = [
 			<span>{{ currentProperty.baths ?? '—' }} ba</span>
 			<span>{{ currentProperty.sqft ? currentProperty.sqft.toLocaleString() : '—' }} sqft</span>
 			<span>Built {{ currentProperty.yearBuilt ?? '—' }}</span>
+			<span class="score-badge" :style="{ color: scoreColor(investmentScore?.score) }">
+				Score: {{ investmentScore?.score ?? '—' }}
+			</span>
 		</div>
 
 		<div class="county-strip" v-if="context">
@@ -215,6 +227,10 @@ const METRICS_META = [
 	margin-bottom: 12px;
 	padding-bottom: 12px;
 	border-bottom: 1px solid #ccc;
+}
+.score-badge {
+	margin-left: auto;
+	font-weight: bold;
 }
 .county-strip {
 	display: flex;

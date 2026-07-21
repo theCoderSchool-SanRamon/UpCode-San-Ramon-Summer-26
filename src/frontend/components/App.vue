@@ -44,7 +44,6 @@ function handleTriggerDetail(feature, place) {
 <template>
 
 <div id="layer_root_overlay">
-
 	<div id="toolbar_container">
 
 		<Search id="search" :counties="mapRef?.countyList ?? []" @select="handleSelect" />

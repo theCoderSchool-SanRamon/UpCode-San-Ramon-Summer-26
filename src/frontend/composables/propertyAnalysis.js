@@ -15,6 +15,26 @@ export const MAX_COMPARE = 4
 
 const COUNTY_SUFFIX_RE = /\s+(county|parish|borough|census area|municipality|municipio|city and borough)$/i
 
+const PROPERTY_SCORE_FACTORS = {
+	monthlyCashFlow: { weight: 0.30, points: [[-1600, 0], [-780, 50], [300, 100]] },
+	cashOnCash: { weight: 0.25, points: [[-0.18, 0], [-0.085, 50], [0.05, 100]] },
+	capRate: { weight: 0.20, points: [[0.015, 0], [0.035, 50], [0.065, 100]] },
+	DSCR: { weight: 0.15, points: [[0.35, 0], [0.62, 50], [1.0, 100]] },
+	grossYield: { weight: 0.10, points: [[0.03, 0], [0.065, 50], [0.10, 100]] },
+}
+const PROPERTY_SCORE_WEIGHT_SUM = Object.values(PROPERTY_SCORE_FACTORS).reduce((a, f) => a + f.weight, 0)
+
+function scoreBand(value, points) {
+	if (value <= points[0][0]) return points[0][1]
+	const last = points[points.length - 1]
+	if (value >= last[0]) return last[1]
+	for (let i = 0; i < points.length - 1; i++) {
+		const [x0, y0] = points[i], [x1, y1] = points[i + 1]
+		if (value >= x0 && value <= x1) return y0 + (y1 - y0) * (value - x0) / (x1 - x0)
+	}
+	return last[1]
+}
+
 const assumptions = reactive({ ...DEFAULT_ASSUMPTIONS })
 const currentProperty = ref(null)
 const compareList = ref([])
@@ -167,6 +187,23 @@ export function usePropertyAnalysis() {
 		return { grossYield, NOI, capRate, monthlyMortgage, monthlyCashFlow, cashOnCash, DSCR }
 	}
 
+	function computePropertyScore(metrics) {
+		if (!metrics) return null
+		let weightedSum = 0, weightPresent = 0
+		for (const [key, factor] of Object.entries(PROPERTY_SCORE_FACTORS)) {
+			const value = metrics[key]
+			if (value == null || !Number.isFinite(value)) continue
+			const subscore = Math.min(Math.max(scoreBand(value, factor.points), 0), 100)
+			weightedSum += factor.weight * subscore
+			weightPresent += factor.weight
+		}
+		if (weightPresent <= 0) return { score: null, partialData: true }
+		return {
+			score: Math.round(weightedSum / weightPresent),
+			partialData: weightPresent < PROPERTY_SCORE_WEIGHT_SUM - 1e-9,
+		}
+	}
+
 	return {
 		assumptions,
 		currentProperty,
@@ -181,6 +218,7 @@ export function usePropertyAnalysis() {
 		clearCompare,
 		resetAssumptions,
 		computeMetrics,
+		computePropertyScore,
 		countyContext,
 	}
 }
