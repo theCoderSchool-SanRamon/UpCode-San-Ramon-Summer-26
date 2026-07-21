@@ -305,8 +305,10 @@ onMounted(async () => {
 			addressQuery.value = address
 			fetchProperty(address).catch(() => {})
 		}
-		const [feature, layer] = mapInstance.forEachFeatureAtPixel(evt.pixel, (f, l) => ([f, l]), { layerFilter: l => ((l === countylayer && countyActive) || (l === placelayer && cityActive))}) ?? [null, null]
-		emit("triggerDetail", feature, layer === placelayer)
+		else {
+			const [feature, layer] = mapInstance.forEachFeatureAtPixel(evt.pixel, (f, l) => ([f, l]), { layerFilter: l => ((l === countylayer && countyActive) || (l === placelayer && cityActive))}) ?? [null, null]
+			emit("triggerDetail", feature, layer === placelayer)
+		}
 	})
 
 	mapInstance.on('moveend', () => {
