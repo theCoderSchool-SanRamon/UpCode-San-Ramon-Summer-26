@@ -10,6 +10,8 @@ const activeChart = ref(null)
 
 const invlerp = (l, u, v) => (v - l) / (u - l)
 
+const chartLoading = ref(true)
+
 function activateDetail(feature, place) {
 	if (!feature) {return}
 	detailVisible.value = true
@@ -22,6 +24,7 @@ async function buildChart(data) {
 	data[0] = data[0] > 0 ? invlerp(0, 2000000, data[0]) : null
 	data[1] = data[1] > 0 ? invlerp(0, 3000, data[1]) : null
 	data[2] = Math.log(data[2] / 100) / Math.log(4000000 / 100)
+	chartLoading.value = false
 	activeChart.value = new Chart(radarCanvas.value, {
 		type: "radar",
 		data: {
@@ -47,6 +50,7 @@ async function buildChart(data) {
 function deactivate() {
 	detailVisible.value = false
 	activeChart.value.destroy()
+	chartLoading.value = true
 }
 
 onMounted(async () => {
@@ -61,6 +65,7 @@ defineExpose({
 <template>
 	<div id="detail-box-backing" v-show="detailVisible" @click.self="deactivate()">
 		<div id="detail-box-container">
+			<img src="/loading-9.gif" v-if="chartLoading">
 			<canvas id="radar" ref="radarCanvas"></canvas>
 		</div>
 	</div>
@@ -75,13 +80,15 @@ defineExpose({
 	background-color: #2f4f4f3f;
 }
 #detail-box-container {
-	background-color: azure;
-	width: 75%;
+	background-color: white;
+	width: 50%;
 	height: 75vh;
 	z-index: 102;
 	padding: 16px;
-	margin-left: 12.5%;
+	margin-left: 25%;
 	border-radius: 8px;
 	pointer-events: auto;
+	display: grid;
+	place-items: center;
 }
 </style>
