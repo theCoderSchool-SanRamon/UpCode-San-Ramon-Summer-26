@@ -377,6 +377,7 @@ defineExpose({
 	
 	<div class="map" ref="mapRoot">
 		<div id="loading" v-show="loading">
+			<img src="/logo.png" width="128" height="256" style="image-rendering: pixelated; image-rendering: crisp-edges;"></img>
 			<img src="/loading-9.gif" style="width: 10%; aspect-ratio: 1; object-fit: cover; "></img>
 		</div>
 		<div class="hover-box" v-if="isHovering && hoverInfo" :style="{ left: mouseX + 12 + 'px', top: mouseY + 20 + 'px' }">
@@ -450,6 +451,7 @@ defineExpose({
 	align-content: center;
 	justify-content: center;
 	align-items: center;
+	flex-direction: column;
 	display: flex;
 }
 </style>
