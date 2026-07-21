@@ -6,7 +6,7 @@ const {populationFilter} = useCountyScores()
 </script>
 
 <template>
-<ToolDropdown :icon-closed="'/107799.png'">
+<ToolDropdown :icon-closed="'/filter_closed.png'" :icon-open="'/filter_open.png'">
 	<div class="filter-body">
 		<div class="population-filter">
 			<p><b>Filter by County Population</b></p>
