@@ -19,8 +19,8 @@ function activateDetail(feature, place) {
 async function buildChart(data) {
 	data = await data
 	data = Object.values(await data.json())[0]
-	data[0] = invlerp(0, 2000000, data[0])
-	data[1] = invlerp(0, 3000, data[1])
+	data[0] = data[0] > 0 ? invlerp(0, 2000000, data[0]) : null
+	data[1] = data[1] > 0 ? invlerp(0, 3000, data[1]) : null
 	data[2] = Math.log(data[2] / 100) / Math.log(4000000 / 100)
 	activeChart.value = new Chart(radarCanvas.value, {
 		type: "radar",
