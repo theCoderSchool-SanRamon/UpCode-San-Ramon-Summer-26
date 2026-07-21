@@ -103,7 +103,7 @@ function selectRow(row) {
 				<th @click="setSort('score')" :class="{ active: sortKey === 'score' }">Score</th>
 				<th @click="setSort('ratio')" :class="{ active: sortKey === 'ratio' }">Ratio</th>
 				<th @click="setSort('rentGrowth')" :class="{ active: sortKey === 'rentGrowth' }">Rent&nbsp;Growth</th>
-				<th @click="setSort('pop')" :class="{ active: sortKey === 'pop' }">Population</th>>
+				<th @click="setSort('pop')" :class="{ active: sortKey === 'pop' }">Population</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -124,7 +124,7 @@ function selectRow(row) {
 <style scoped>
 #leaderboard {
 	position: fixed;
-	margin-left: 16px;
+	margin: 16px;
 	scrollbar-width: none;
 	flex: auto;
 	max-height: calc(100%);
