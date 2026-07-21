@@ -4,11 +4,11 @@ DATA_PATH = "public/countydata.json"
 
 FACTORS = {
 	"ratio": {"weight": 0.20, "invert": True},
-	"apprec": {"weight": 0.20, "invert": False},
+	"apprec": {"weight": 0.15, "invert": False},
 	"rentGrowth": {"weight": 0.15, "invert": False},
 	"tax": {"weight": 0.15, "invert": True},
 	"vac": {"weight": 0.15, "invert": True},
-	"pop": {"weight": 0.15, "target": 100000, "tolerance": 500000, "invert": False},
+	"pop": {"weight": 0.20, "target": 100000, "tolerance": 500000, "invert": False},
 }
 
 

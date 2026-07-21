@@ -1,12 +1,12 @@
 import { reactive, ref, computed, watch } from 'vue'
 
 export const FACTORS = {
-	ratio: { weight: 0.30, invert: true },
-	apprec: { weight: 0.25, invert: false },
+	ratio: { weight: 0.20, invert: true },
+	apprec: { weight: 0.15, invert: false },
 	rentGrowth: { weight: 0.15, invert: false },
 	tax: { weight: 0.15, invert: true },
 	vac: { weight: 0.15, invert: true },
-	pop: { weight: 0, invert: false},
+	pop: { weight: 0.20, invert: false},
 }
 export const DEFAULT_WEIGHTS = Object.fromEntries(
 	Object.entries(FACTORS).map(([k, v]) => [k, v.weight])
