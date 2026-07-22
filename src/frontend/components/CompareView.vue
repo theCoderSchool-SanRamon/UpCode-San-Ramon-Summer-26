@@ -98,7 +98,7 @@ const verdict = computed(() => {
 						<th class="row-label"></th>
 						<th v-for="row in rows" :key="row.property.id">
 							<div class="col-label">{{ row.label }}</div>
-							<div class="col-address">{{ row.property.address }}</div>
+							<div class="col-address">{{row.property.address}}</div>
 						</th>
 					</tr>
 				</thead>
