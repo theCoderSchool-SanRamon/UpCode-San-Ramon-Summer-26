@@ -1,2 +1,2 @@
 [tool.vercel]
-entrypoint = "middleware"
+entrypoint = "src.backend:middleware"
