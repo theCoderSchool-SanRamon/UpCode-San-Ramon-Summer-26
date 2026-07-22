@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
-    { "source": "/api/", "destination": "https://up-code-san-ramon-summer-26-backend.vercel.app/" }
+    { "source": "/api/:match*", "destination": "https://up-code-san-ramon-summer-26-backend.vercel.app/:match*" }
   ]
 }
