@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import Map from './map.vue'
-import Search from './search.vue'
+import Search from './Search.vue'
 import Leaderboard from './Leaderboard.vue'
 import PropertyPanel from './PropertyPanel.vue'
 import CompareView from './CompareView.vue'
