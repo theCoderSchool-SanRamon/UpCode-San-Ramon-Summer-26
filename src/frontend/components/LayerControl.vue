@@ -29,7 +29,7 @@ watch(heatmapShows, () => {emit("changed", {type: "heatmap", value: heatmapShows
 			<div class="l-item">County <input type="checkbox" v-model="countyActive" /></div>
 			<h4>Show on Heatmap:</h4>
 			<div class="l-item">Price-Rent Ratio<input type="radio" name="heatmapshows" value="pricerent" v-model="heatmapShows" /></div>
-			<div class="l-item">Investment Score<input type="radio" name="heatmapshows" value="score" v-model="heatmapShows" /></div>
+			<div class="l-item">Investment Score (county only)<input type="radio" name="heatmapshows" value="score" v-model="heatmapShows" /></div>
 			<div class="l-item">Population<input type="radio" name="heatmapshows" value="population" v-model="heatmapShows" /></div>
 		</div>
 	</ToolDropdown>
