@@ -24,6 +24,7 @@ const heatmapShows = ref("pricerent")
 const mapRoot = ref(null)
 let countyData = ref(null)
 let placeData = ref(null)
+const maxPopulation = ref(1)
 
 let mapInstance = null
 let OSMLayer = null
@@ -158,20 +159,28 @@ function countyMeetsThreshold(id, threshold) {
 function styleCountyFeature(feature) {
 	const id = getCountyId(feature)
 	let dataPoint
+	let colorMax = 60
+	let inverted = false
 	switch (heatmapShows.value) {
 		case "pricerent":
-			dataPoint = (Number(countyData[id][0]) / Number(countyData[id][1]))/12 // TODO: CHANGE ALL THE OTHER ONES
+			dataPoint = (Number(countyData[id][0]) / Number(countyData[id][1]))/12
+			colorMax = 60
+			inverted = false // low ratio (cheap relative to rent) is good -> green
 			break;
 		case "score":
-			dataPoint = (Number(countyData[id][0]) / Number(countyData[id][1]))/12
+			dataPoint = countyScores.value[keyFor(feature.get("NAME"), feature.get("STUSPS"))]?.score ?? 0
+			colorMax = 100
+			inverted = true // high score is good -> green
 			break;
 		case "population":
-			dataPoint = (Number(countyData[id][0]) / Number(countyData[id][1]))/12
+			dataPoint = Number(countyData[id][2]) || 0
+			colorMax = maxPopulation.value
+			inverted = true // more population is good -> green
 			break;
 	}
 
 	const fillColor = countyMeetsThreshold(id, populationFilter.value)
-		? getColor(dataPoint, 60, false)
+		? getColor(dataPoint, colorMax, inverted)
 		: '#B5B5B5'
 	const isHighlighted = id === highlightedId.value
 	return new Style({
@@ -265,6 +274,7 @@ onMounted(async () => {
 	placeGeometry = await placeGeometry.json()
 	countyData = await priceandrentcounty.json()
 	placeData = await priceandrentplace.json()
+	maxPopulation.value = Math.max(1, ...Object.values(countyData).map(c => Number(c[2]) || 0))
 
 	var countyFeatures = new GeoJSON().readFeatures(
 			countyGeometry,
