@@ -1,8 +1,6 @@
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-import sqlite3
-
 import api_query as api_query
 import property_query as property_query
 import listings_query as listings_query
