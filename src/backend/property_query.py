@@ -11,27 +11,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-CACHE_PATH = Path(__file__).resolve().parent.parent.parent / "property_cache.json"
-_cache_lock = Lock()
-
 
 def normalize_address(address: str) -> str:
 	return re.sub(r"\s+", " ", address.strip().lower())
-
-
-def _load_cache() -> dict:
-	if not CACHE_PATH.exists():
-		return {}
-	try:
-		with open(CACHE_PATH, "r") as f:
-			return json.load(f)
-	except (json.JSONDecodeError, OSError):
-		return {}
-
-
-def _save_cache(cache: dict):
-	with open(CACHE_PATH, "w") as f:
-		json.dump(cache, f, indent=2)
 
 
 class RentCastRequester:
@@ -100,14 +82,7 @@ def get_property(address: str) -> dict:
 		raise HTTPException(status_code=422, detail="address must be provided.")
 
 	key = normalize_address(address)
-	with _cache_lock:
-		cache = _load_cache()
-		if key in cache:
-			return cache[key]
+	data = RentCastRequester().fetch(address)
 
-		data = RentCastRequester().fetch(address)
-
-		if _has_property_data(data):
-			cache[key] = data
-			_save_cache(cache)
+	if _has_property_data(data):
 		return data
