@@ -519,7 +519,7 @@ defineExpose({
 	z-index: 100;
 	width: 100%;
 	height: 100%;
-	background: white;
+	background: rgb(255,254,246);
 	align-content: center;
 	justify-content: center;
 	align-items: center;
