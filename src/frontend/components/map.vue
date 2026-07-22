@@ -212,25 +212,37 @@ function stylePlaceFeature(feature) {
 		let dataPoint
 		let colorMax = 60
 		let inverted = false
+		let green
+		let red
+		let yellow
 		switch (heatmapShows.value) {
 			case "pricerent":
 				dataPoint = (Number(placeData[id][0]) / Number(placeData[id][1]))/12
 				colorMax = 60
 				inverted = false // low ratio (cheap relative to rent) is good -> green
+				green='green'
+				red='red'
+				yellow='yellow'
 				break;
 			case "score":
-				dataPoint = (Number(placeData[id][0]) / Number(placeData[id][1]))/12
+				dataPoint = 30
 				colorMax = 60
 				inverted = false // low ratio (cheap relative to rent) is good -> green
+				green='#B5B5B5'
+				red='#B5B5B5'
+				yellow='#B5B5B5'
 				break;
 			case "population":
 				dataPoint = Math.log(Number(placeData[id][2]) / 100) / Math.log(4000000 / 100)
 				colorMax = 1
 				inverted = true // more population is good -> green
+				green='red'
+				red='blue'
+				yellow='purple'
 				break;
 		}
 		const fillColor = true
-			? getColor(dataPoint, colorMax, inverted)
+			? getColor(dataPoint, colorMax, inverted,green,red,yellow)
 			: '#B5B5B5'
 		const isHighlighted = id === highlightedId.value
 		return new Style({
