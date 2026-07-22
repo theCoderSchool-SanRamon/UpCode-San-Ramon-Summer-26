@@ -209,8 +209,28 @@ function styleCountyFeature(feature) {
 function stylePlaceFeature(feature) {
 	try {
 		const id = getPlaceId(feature)
-		const fillColor = true // countyMeetsThreshold(id, POPULATION_THRESHOLDS[populationFilter.value])
-			? getColor((Number(placeData[id][0]) / Number(placeData[id][1])) / 12, 60, false)
+		let dataPoint
+		let colorMax = 60
+		let inverted = false
+		switch (heatmapShows.value) {
+			case "pricerent":
+				dataPoint = (Number(placeData[id][0]) / Number(placeData[id][1]))/12
+				colorMax = 60
+				inverted = false // low ratio (cheap relative to rent) is good -> green
+				break;
+			case "score":
+				dataPoint = (Number(placeData[id][0]) / Number(placeData[id][1]))/12
+				colorMax = 60
+				inverted = false // low ratio (cheap relative to rent) is good -> green
+				break;
+			case "population":
+				dataPoint = Math.log(Number(placeData[id][2]) / 100) / Math.log(4000000 / 100)
+				colorMax = 1
+				inverted = true // more population is good -> green
+				break;
+		}
+		const fillColor = true
+			? getColor(dataPoint, colorMax, inverted)
 			: '#B5B5B5'
 		const isHighlighted = id === highlightedId.value
 		return new Style({
@@ -367,7 +387,7 @@ onMounted(async () => {
 
 watch(highlightedId, () => countylayer.changed())
 watch(populationFilter, () => countylayer.changed())
-watch(heatmapShows, () => countylayer.changed())
+watch(heatmapShows, () => {countylayer.changed(); placelayer.changed()})
 
 function goToCounty(key) {
 	const feature = countyFeaturesById[key]
