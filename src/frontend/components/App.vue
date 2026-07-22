@@ -10,6 +10,7 @@ import Filter from './Filter.vue'
 import ToolToggle from './ToolToggle.vue'
 import DetailBox from './DetailBox.vue'
 import About from './About.vue'
+import { Analytics } from '@vercel/analytics/vue'
 
 const mapRef = ref(null)
 const detailBoxRef = ref(null)
@@ -42,6 +43,8 @@ function handleTriggerDetail(feature, place) {
 </script>
 
 <template>
+
+<Analytics />
 
 <div id="layer_root_overlay">
 	<div id="toolbar_container">

@@ -15,6 +15,7 @@
   "packageManager": "pnpm@11.7.0",
   "type": "module",
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "chart.js": "^4.5.1",
     "ol": "^10.9.0",
     "vue": "^3.5.40"
