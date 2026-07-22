@@ -173,8 +173,9 @@ function styleCountyFeature(feature) {
 			inverted = true // high score is good -> green
 			break;
 		case "population":
-			dataPoint = Number(countyData[id][2]) || 0
-			colorMax = maxPopulation.value
+			console.log(Math.log(Number(countyData[id][2]) / 100) / Math.log(4000000 / 100))
+			dataPoint = Math.log(Number(countyData[id][2]) / 100) / Math.log(4000000 / 100)
+			colorMax = 1
 			inverted = true // more population is good -> green
 			break;
 	}
@@ -222,7 +223,7 @@ function stylePlaceFeature(feature) {
 }
 
 function getColor(d, m, i) {
-	return d <= 1 ? '#CFCFCF' : getColorMix(
+	return d <= 0 ? '#CFCFCF' : getColorMix(
 		(100 * (Math.min(d, m) / m)) < 50 ? `color-mix(
 		in srgb,
 		${i ? 'red' : 'green'},
