@@ -63,15 +63,35 @@ defineExpose({
 </script>
 
 <template>
+	<Transition>
 	<div id="detail-box-backing" v-show="detailVisible" @click.self="deactivate()">
+		<Transition>
 		<div id="detail-box-container">
-			<img src="/loading-9.gif" v-if="chartLoading">
+			<img style="width: 25%; aspect-ratio: 1; object-fit: cover;" src="/loading-9.gif" v-if="chartLoading" />
 			<canvas id="radar" ref="radarCanvas"></canvas>
 		</div>
+		</Transition>
 	</div>
+</Transition>
 </template>
 
 <style scoped>
+.v-enter-active, .v-leave-active {
+	transition: opacity 0.5s ease;
+}
+.v-enter-from, .v-leave-to {
+	opacity: 0;
+}
+.v-enter-active #detail-box-container,
+.v-leave-active #detail-box-container {
+	transition: transform 0.4s cubic-bezier(0.16, 1, 0.5, 1);
+}
+.v-enter-from #detail-box-container {
+	transform: scale(0.9) translateY(130%);
+}
+.v-leave-to #detail-box-container {
+	transform: scale(0.9);
+}
 #detail-box-backing {
 	pointer-events: auto;
 	width: 100%;

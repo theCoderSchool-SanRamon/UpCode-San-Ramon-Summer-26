@@ -161,26 +161,38 @@ function styleCountyFeature(feature) {
 	let dataPoint
 	let colorMax = 60
 	let inverted = false
+	let green
+	let red
+	let yellow
 	switch (heatmapShows.value) {
 		case "pricerent":
 			dataPoint = (Number(countyData[id][0]) / Number(countyData[id][1]))/12
 			colorMax = 60
 			inverted = false // low ratio (cheap relative to rent) is good -> green
+			green='green'
+			red='red'
+			yellow='yellow'
 			break;
 		case "score":
 			dataPoint = countyScores.value[keyFor(feature.get("NAME"), feature.get("STUSPS"))]?.score ?? 0
 			colorMax = 100
 			inverted = true // high score is good -> green
+			green='green'
+			red='red'
+			yellow='yellow'
 			break;
 		case "population":
 			dataPoint = Math.log(Number(countyData[id][2]) / 100) / Math.log(4000000 / 100)
 			colorMax = 1
 			inverted = true // more population is good -> green
+			green='red'
+			red='blue'
+			yellow='purple'
 			break;
 	}
 
 	const fillColor = countyMeetsThreshold(id, populationFilter.value)
-		? getColor(dataPoint, colorMax, inverted)
+		? getColor(dataPoint, colorMax, inverted,green,red,yellow)
 		: '#B5B5B5'
 	const isHighlighted = id === highlightedId.value
 	return new Style({
@@ -221,16 +233,16 @@ function stylePlaceFeature(feature) {
 	}
 }
 
-function getColor(d, m, i) {
+function getColor(d, m, i, green,red,yellow) {
 	return d <= 0 ? '#CFCFCF' : getColorMix(
 		(100 * (Math.min(d, m) / m)) < 50 ? `color-mix(
 		in srgb,
-		${i ? 'red' : 'green'},
-		yellow ${(100 * (Math.min(d, m) / m)) * 2}%)`
+		${i ? red : green},
+		${yellow} ${(100 * (Math.min(d, m) / m)) * 2}%)`
 		: `color-mix(
 		in srgb,
-		yellow,
-		${i ? 'green' : 'red'} ${((100 * (Math.min(d, m) / m)) - 50) * 2}%)`
+		${yellow},
+		${i ? green : red} ${((100 * (Math.min(d, m) / m)) - 50) * 2}%)`
 	);
 }
 
