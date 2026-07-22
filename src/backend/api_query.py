@@ -1,12 +1,13 @@
 from fastapi import HTTPException
 
-import requests
+import requests, dotenv, os
 
 # place = "53980"
 # state = "06"
 
 cache = {}
 
+dotenv.load_dotenv()
 
 class APIRequester:
 	def __init__(self, url: str):
@@ -18,12 +19,8 @@ class APIRequester:
 
 class CensusRequester(APIRequester):
 	def __init__(self):
-		try:
-			with open(".census_key", "r") as f:
-				self.key = f.read()
-			super().__init__("https://api.census.gov/data/2024/acs/acs5")
-		except FileNotFoundError:
-			print("Census API Key not found. Please provide at .census_key.")
+		super().__init__("https://api.census.gov/data/2024/acs/acs5")
+		self.key = os.environ.get("CENSUS_API_KEY")
 
 	def send_query(self, **params: dict):
 		params = {k: v for k, v in params.items() if v != None}
