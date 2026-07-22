@@ -173,7 +173,6 @@ function styleCountyFeature(feature) {
 			inverted = true // high score is good -> green
 			break;
 		case "population":
-			console.log(Math.log(Number(countyData[id][2]) / 100) / Math.log(4000000 / 100))
 			dataPoint = Math.log(Number(countyData[id][2]) / 100) / Math.log(4000000 / 100)
 			colorMax = 1
 			inverted = true // more population is good -> green
