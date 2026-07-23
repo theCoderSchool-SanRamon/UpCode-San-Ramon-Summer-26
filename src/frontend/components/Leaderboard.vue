@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useCountyScores } from '../composables/countyScores.js'
+import { useChat } from '../composables/chat.js'
 
 const props = defineProps({
 	counties: { type: Array, default: () => [] },
@@ -9,6 +10,11 @@ const emit = defineEmits(['select'])
 
 const { weights, weightsSum, weightsValid, rawCountyData, countyScores,
 	ensureLoaded, resetWeights, keyFor, FACTORS, populationFilter} = useCountyScores()
+const { isExpanded: chatExpanded } = useChat()
+
+const leaderboardMaxHeight = computed(() =>
+	chatExpanded.value ? 'calc(100% - 608px)' : 'calc(100% - 96px)'
+)
 
 onMounted(ensureLoaded)
 
@@ -69,7 +75,7 @@ function selectRow(row) {
 
 <template>
 
-<div id="leaderboard">
+<div id="leaderboard" :style="{ maxHeight: leaderboardMaxHeight }">
 	<div class="weights-panel">
 		<h4>Score Weights</h4>
 		<div class="weight-row" v-for="k in factorKeys" :key="k">
@@ -127,7 +133,6 @@ function selectRow(row) {
 	margin: 16px;
 	scrollbar-width: none;
 	flex: auto;
-	max-height: calc(100%);
 	z-index: 100;
 	right: 0px;
 	padding: 16px;
