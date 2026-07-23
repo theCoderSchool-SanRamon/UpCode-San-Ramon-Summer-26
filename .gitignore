@@ -6,10 +6,13 @@
 # Backend property/listings lookup cache
 property_cache.json
 listings_cache.json
+# Backend Street View lookup cache
+streetview_cache.json
+streetview_imgs/
 # Python auto-generated folders
 __pycache__
 .venv
 # Storage of installed modules
 /node_modules
 # MacOS-specific auto-generated file
-.DS_Store
+.DS_Storedist
