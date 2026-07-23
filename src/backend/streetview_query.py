@@ -10,28 +10,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-CACHE_PATH = Path(__file__).resolve().parent.parent.parent / "streetview_cache.json"
-IMG_DIR = Path(__file__).resolve().parent.parent.parent / "streetview_imgs"
-_cache_lock = Lock()
-
 
 def _key(lat: float, lng: float) -> str:
 	return f"{lat + 0.0:.6f},{lng + 0.0:.6f}"
-
-
-def _load_cache() -> dict:
-	if not CACHE_PATH.exists():
-		return {}
-	try:
-		with open(CACHE_PATH, "r") as f:
-			return json.load(f)
-	except (json.JSONDecodeError, OSError):
-		return {}
-
-
-def _save_cache(cache: dict):
-	with open(CACHE_PATH, "w") as f:
-		json.dump(cache, f, indent=2)
 
 
 class StreetViewRequester:
@@ -80,16 +61,8 @@ class StreetViewRequester:
 
 def _get_availability(lat: float, lng: float) -> bool | None:
 	key = _key(lat, lng)
-	with _cache_lock:
-		cache = _load_cache()
-		if key in cache:
-			return cache[key]["available"]
-
-		available = StreetViewRequester().check_available(lat, lng)
-		if available is not None:
-			cache[key] = {"available": available}
-			_save_cache(cache)
-		return available
+	available = StreetViewRequester().check_available(lat, lng)
+	return available
 
 
 ALLOWED_SIZES = {"400x300", "600x450"}
@@ -110,17 +83,7 @@ def get_streetview_image(lat: float, lng: float, size: str = DEFAULT_SIZE) -> Re
 		raise HTTPException(status_code=404, detail="No Street View imagery available.")
 
 	key = _key(lat, lng)
-	img_path = IMG_DIR / f"{key.replace(',', '_')}_{size}.jpg"
-
-	with _cache_lock:
-		if not img_path.exists():
-			img_bytes = StreetViewRequester().fetch_image_bytes(lat, lng, size)
-			if img_bytes is None:
-				raise HTTPException(status_code=502, detail="Street View image fetch failed.")
-			IMG_DIR.mkdir(exist_ok=True)
-			with open(img_path, "wb") as f:
-				f.write(img_bytes)
-			return Response(content=img_bytes, media_type="image/jpeg")
-
-		with open(img_path, "rb") as f:
-			return Response(content=f.read(), media_type="image/jpeg")
+	img_bytes = StreetViewRequester().fetch_image_bytes(lat, lng, size)
+	if img_bytes is None:
+		raise HTTPException(status_code=502, detail="Street View image fetch failed.")
+	return Response(content=img_bytes, media_type="image/jpeg")
