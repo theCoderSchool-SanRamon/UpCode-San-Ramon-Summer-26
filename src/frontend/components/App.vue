@@ -10,6 +10,7 @@ import Filter from './Filter.vue'
 import ToolToggle from './ToolToggle.vue'
 import DetailBox from './DetailBox.vue'
 import About from './About.vue'
+import ChatWidget from './ChatWidget.vue'
 
 const mapRef = ref(null)
 const detailBoxRef = ref(null)
@@ -54,6 +55,7 @@ function handleTriggerDetail(feature, place) {
 	</div>
 	<DetailBox ref="detailBoxRef" />
 	<Leaderboard :counties="mapRef?.countyList ?? []" @select="handleSelect" v-show="showLeaderboard" />
+	<ChatWidget />
 	<PropertyPanel />
 
 	<CompareView />

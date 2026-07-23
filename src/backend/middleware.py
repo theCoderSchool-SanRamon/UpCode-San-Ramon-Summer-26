@@ -1,10 +1,11 @@
-from fastapi import FastAPI, Query, HTTPException
+from fastapi import FastAPI, Query, Body, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 import api_query as api_query
 import property_query as property_query
 import listings_query as listings_query
 import streetview_query as streetview_query
+import gemini_query as gemini_query
 
 app = FastAPI()
 
@@ -12,7 +13,7 @@ app.add_middleware(  # we should figure this out
 	CORSMiddleware,
 	allow_origins=["*"],
 	allow_credentials=True,
-	allow_methods=["GET"],
+	allow_methods=["GET", "POST"],
 	allow_headers=["*"],
 )
 
@@ -51,6 +52,11 @@ def query_streetview(lat: float = Query(...), lng: float = Query(...)):
 @app.get("/streetview/img")
 def query_streetview_img(lat: float = Query(...), lng: float = Query(...), size: str = Query(streetview_query.DEFAULT_SIZE)):
 	return streetview_query.get_streetview_image(lat, lng, size)
+
+
+@app.post("/chat")
+def query_chat(payload: dict = Body(...)):
+	return gemini_query.get_chat_reply(payload)
 
 
 if __name__ == "__main__":
