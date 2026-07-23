@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import api_query as api_query
 import property_query as property_query
 import listings_query as listings_query
+import streetview_query as streetview_query
 
 app = FastAPI()
 
@@ -40,6 +41,16 @@ def query_property(address: str = Query(...)):
 @app.get("/listings")
 def query_listings(lat: float = Query(...), lon: float = Query(...), radius: float = Query(3.0)):
 	return listings_query.get_listings(lat, lon, radius)
+
+
+@app.get("/streetview")
+def query_streetview(lat: float = Query(...), lng: float = Query(...)):
+	return streetview_query.get_streetview_meta(lat, lng)
+
+
+@app.get("/streetview/img")
+def query_streetview_img(lat: float = Query(...), lng: float = Query(...), size: str = Query(streetview_query.DEFAULT_SIZE)):
+	return streetview_query.get_streetview_image(lat, lng, size)
 
 
 if __name__ == "__main__":

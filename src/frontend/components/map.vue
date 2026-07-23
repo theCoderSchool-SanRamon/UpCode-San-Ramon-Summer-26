@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import Map from 'ol/Map.js'
 import OSM from 'ol/source/OSM.js'
 import TileLayer from 'ol/layer/Tile.js'
@@ -14,6 +14,7 @@ import { Style, Fill, Stroke, Text } from 'ol/style';
 import { fromLonLat, toLonLat } from 'ol/proj.js';
 import { useCountyScores } from '../composables/countyScores.js'
 import { usePropertyAnalysis } from '../composables/propertyAnalysis.js'
+import { getStreetviewPhoto } from '../composables/streetview.js'
 
 const { countyScores, keyFor, ensureLoaded: ensureScoresLoaded, populationFilter} = useCountyScores()
 const { fetchProperty, addressQuery } = usePropertyAnalysis()
@@ -91,6 +92,12 @@ listingsLayer.setVisible(false)
 const fetchedListingBuckets = new Set()
 const seenListingAddresses = new Set()
 
+const hoveredListingFeature = shallowRef(null)
+const listingHoverInfo = ref(null)
+const hoverBoxX = ref(0)
+const hoverBoxY = ref(0)
+let listingHoverTimer = null
+
 function formatPriceShort(v) {
 	if (v == null) return '?'
 	if (v >= 1e6) return '$' + (v / 1e6).toFixed(2) + 'M'
@@ -136,6 +143,8 @@ async function fetchListings(lat, lon, radiusMiles) {
 			feature.set('beds', l.beds)
 			feature.set('baths', l.baths)
 			feature.set('sqft', l.sqft)
+			feature.set('latitude', l.latitude)
+			feature.set('longitude', l.longitude)
 			features.push(feature)
 		}
 		listingsSource.addFeatures(features)
@@ -352,6 +361,37 @@ onMounted(async () => {
 		mouseY.value = evt.originalEvent.clientY
 		const listingFeature = mapInstance.forEachFeatureAtPixel(evt.pixel, f => f, { layerFilter: l => l === listingsLayer })
 		mapInstance.getViewport().style.cursor = listingFeature ? 'pointer' : ''
+
+		if (listingFeature !== hoveredListingFeature.value) {
+			if (listingHoverTimer) { clearTimeout(listingHoverTimer); listingHoverTimer = null }
+			hoveredListingFeature.value = listingFeature
+			listingHoverInfo.value = listingFeature ? {
+				address: listingFeature.get('address'),
+				price: listingFeature.get('price'),
+				beds: listingFeature.get('beds'),
+				baths: listingFeature.get('baths'),
+				sqft: listingFeature.get('sqft'),
+				photoUrl: undefined,
+			} : null
+
+			if (listingFeature) {
+				const [px, py] = mapInstance.getPixelFromCoordinate(listingFeature.getGeometry().getCoordinates())
+				hoverBoxX.value = px
+				hoverBoxY.value = py
+
+				const captured = listingFeature
+				listingHoverTimer = setTimeout(() => {
+					listingHoverTimer = null
+					if (hoveredListingFeature.value !== captured) return
+					const address = captured.get('address')
+					getStreetviewPhoto(address, captured.get('latitude'), captured.get('longitude')).then(photoUrl => {
+						if (hoveredListingFeature.value !== captured) return
+						listingHoverInfo.value = { ...listingHoverInfo.value, photoUrl }
+					})
+				}, 300)
+			}
+		}
+
 		if (listingFeature) {
 			hoveredFeature.value = null
 			isHovering.value = false
@@ -363,7 +403,12 @@ onMounted(async () => {
 		isHoveringPlace.value = layer === placelayer
 		if (highlightedId.value != null && isHovering.value) { highlightedId.value = null }
 	})
-	mapInstance.getViewport().addEventListener('mouseout', () => { isHovering.value = false })
+	mapInstance.getViewport().addEventListener('mouseout', () => {
+		isHovering.value = false
+		if (listingHoverTimer) { clearTimeout(listingHoverTimer); listingHoverTimer = null }
+		hoveredListingFeature.value = null
+		listingHoverInfo.value = null
+	})
 
 	mapInstance.on('click', (evt) => {
 		const listingFeature = mapInstance.forEachFeatureAtPixel(evt.pixel, f => f, { layerFilter: l => l === listingsLayer })
@@ -463,8 +508,25 @@ defineExpose({
 			<!--<template v-else>No price/rent data</template>-->
 		</div>
 
+		<div
+			class="listing-preview-card"
+			v-if="hoveredListingFeature && listingHoverInfo"
+			:style="{ left: hoverBoxX + 'px', top: hoverBoxY + 'px' }"
+		>
+			<div class="preview-photo-wrap">
+				<img v-if="listingHoverInfo.photoUrl" :src="listingHoverInfo.photoUrl" alt="" />
+				<div v-else class="preview-photo-placeholder"></div>
+				<div class="price-chip">{{ formatPriceShort(listingHoverInfo.price) }}</div>
+			</div>
+			<div class="listing-card-meta">
+				{{ listingHoverInfo.beds ?? '?' }} bd / {{ listingHoverInfo.baths ?? '?' }} ba
+				<template v-if="listingHoverInfo.sqft"> · {{ listingHoverInfo.sqft.toLocaleString() }} sqft</template><br>
+				{{ listingHoverInfo.address }}
+			</div>
+		</div>
+
 	</div>
-	
+
 </template>
 
 <style scoped>
@@ -482,6 +544,53 @@ defineExpose({
 }
 .hover-box h3 {
 	margin: 0 0 5px;
+}
+.listing-preview-card {
+	position: absolute;
+	z-index: 250;
+	pointer-events: none;
+	transform: translate(-50%, calc(-100% - 12px));
+	width: 240px;
+	background: var(--overlay-background, #fff);
+	backdrop-filter: blur(5px);
+	border-radius: 12px;
+	overflow: hidden;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+	font: 13px Arial, sans-serif;
+	color: #333;
+	user-select: none;
+}
+.preview-photo-wrap {
+	position: relative;
+	width: 100%;
+	height: 180px;
+	background: #ccc;
+}
+.preview-photo-wrap img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+.preview-photo-placeholder {
+	width: 100%;
+	height: 100%;
+	background: #ccc;
+}
+.price-chip {
+	position: absolute;
+	left: 8px;
+	bottom: 8px;
+	padding: 3px 8px;
+	background: rgba(0, 0, 0, 0.7);
+	color: #fff;
+	font-weight: bold;
+	font-size: 13px;
+	border-radius: 6px;
+}
+.listing-card-meta {
+	padding: 8px 10px;
+	color: #666;
 }
 .population-filter {
 	position: absolute;

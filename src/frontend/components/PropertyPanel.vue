@@ -1,6 +1,7 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { usePropertyAnalysis } from '../composables/propertyAnalysis.js'
+import { getStreetviewPhoto, streetviewImageUrl } from '../composables/streetview.js'
 
 const {
 	assumptions, currentProperty, compareList, loading, error, MAX_COMPARE,
@@ -10,6 +11,23 @@ const {
 function closePanel() {
 	currentProperty.value = null
 }
+
+const photoUrl = ref(undefined) // undefined = loading/none, null = unavailable, string = image url
+let photoRequestToken = 0
+
+watch(currentProperty, (property) => {
+	photoUrl.value = undefined
+	if (!property || property.latitude == null || property.longitude == null) {
+		photoUrl.value = null
+		return
+	}
+	const { latitude: lat, longitude: lng, address } = property
+	const token = ++photoRequestToken
+	getStreetviewPhoto(address, lat, lng).then(url => {
+		if (token !== photoRequestToken) return
+		photoUrl.value = url ? streetviewImageUrl(lat, lng, '600x450') : null
+	})
+}, { immediate: true })
 
 const metrics = computed(() => computeMetrics(currentProperty.value))
 const investmentScore = computed(() => computePropertyScore(metrics.value))
@@ -66,7 +84,8 @@ const METRICS_META = [
 	<div class="lookup-status" v-if="loading">Looking up property…</div>
 	<div class="lookup-status error" v-else-if="error">{{ error }}</div>
 
-	<div class="property-panel" v-if="currentProperty">
+	<div class="property-row" v-if="currentProperty">
+	<div class="property-panel">
 		<div class="panel-header">
 			<h3>{{ currentProperty.address }}</h3>
 			<button type="button" class="close-btn" @click="closePanel">&times;</button>
@@ -158,6 +177,12 @@ const METRICS_META = [
 			{{ alreadyCompared ? 'Added to Compare' : compareFull ? 'Compare full (4 max)' : 'Add to Compare' }}
 		</button>
 	</div>
+
+	<div class="property-photo-panel">
+		<img v-if="photoUrl" :src="photoUrl" alt="" />
+		<div v-else class="property-photo-placeholder"></div>
+	</div>
+	</div>
 </div>
 </template>
 
@@ -179,6 +204,34 @@ const METRICS_META = [
 }
 .lookup-status.error {
 	color: #c0392b;
+}
+.property-row {
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	gap: 12px;
+}
+.property-photo-panel {
+	pointer-events: auto;
+	flex-shrink: 0;
+	width: 320px;
+	height: 260px;
+	margin: 0 0 16px 0;
+	border-radius: 12px;
+	overflow: hidden;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+	background: #ccc;
+}
+.property-photo-panel img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+.property-photo-placeholder {
+	width: 100%;
+	height: 100%;
+	background: #ccc;
 }
 .property-panel {
 	pointer-events: auto;
