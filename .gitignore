@@ -15,4 +15,5 @@ __pycache__
 # Storage of installed modules
 /node_modules
 # MacOS-specific auto-generated file
-.DS_Storedist
+.DS_Store
+dist
